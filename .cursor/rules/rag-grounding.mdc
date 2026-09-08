@@ -1,0 +1,21 @@
+---
+description: Grounded RAG ? retrieval before generation; production use needs explicit evidence
+globs: src/backend/Application/**/*.cs,src/backend/Application/Prompts/**/*.md,src/backend/Infrastructure/Embeddings/**/*.cs,src/backend/Infrastructure/Reranking/**/*.cs,src/backend/Infrastructure/Documents/**/*.cs,src/tools/**/*.cs
+alwaysApply: false
+---
+
+# Grounded RAG
+
+The LLM must use retrieved chunks as evidence. Do not invent technologies, responsibilities, projects, or production experience.
+
+```text
+# BAD ? "PostgreSQL in the chunk" => "used in production"
+# GOOD ? production only if environment/prose explicitly supports it
+```
+
+- Same embedding model for documents and queries. Model or dimension changes require a full re-index.
+- Frontmatter `technologies` is the declared stack, not every mention in prose.
+- Similarity scores rank results; they are not probabilities or a cutoff.
+- Inspect retrieval via `CandidateConsoleAssistant` before trusting answers.
+- Console/docs: retrieve 10, prompt 5. API `QuestionService` currently retrieves 25, prompt 5 ? do not "fix" that unless asked.
+- `MetadataEvidenceScorer` is term-overlap scoring, not hybrid/lexical search. Do not claim hybrid search exists.

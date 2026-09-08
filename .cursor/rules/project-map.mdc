@@ -1,0 +1,22 @@
+---
+description: Project map and layering for M.I.N.D ? read AGENTS.md before structural changes
+alwaysApply: true
+---
+
+# Project map
+
+Read `AGENTS.md` for layout, run commands, and pitfalls. Product story: `knowledge/projects/ai-candidate-assistant-rag.md`.
+
+Keep these layers separate:
+
+- **Knowledge:** Markdown under `knowledge/projects` is SSoT. Postgres/pgvector is disposable index.
+- **Infrastructure:** documents, embeddings, `VectorStore`, LLM HTTP clients.
+- **Application:** retrieval orchestration, prompts, question flow.
+- **Api / tools:** host and CLIs only; do not put RAG logic in controllers.
+
+```text
+# BAD ? answer from model knowledge with no retrieval
+# GOOD ? retrieve evidence, then generate only from that context
+```
+
+No frontend, auth, or public deploy in this Module 4 backend. Update AGENTS.md when project structure, important commands, architecture, or persistent pitfalls change.

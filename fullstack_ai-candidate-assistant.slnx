@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/backend/">
+    <Project Path="src/backend/Api/Api.csproj" />
+    <Project Path="src/backend/Application/Application.csproj" />
+    <Project Path="src/backend/Infrastructure/Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/tools/">
+    <Project Path="src/tools/CandidateConsoleAssistant/CandidateConsoleAssistant.csproj" />
+    <Project Path="src/tools/KnowledgeIndexer/KnowledgeIndexer.csproj" />
+  </Folder>
+</Solution>

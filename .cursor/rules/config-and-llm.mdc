@@ -1,0 +1,21 @@
+---
+description: Shared config, secrets, and LLM provider/model fallback
+globs: appsettings.json,src/backend/Infrastructure/Configuration/**/*.cs,src/backend/Infrastructure/LLM/**/*.cs,src/backend/Api/Program.cs,.env.example
+alwaysApply: false
+---
+
+# Config and LLM fallback
+
+Load config through `AppConfiguration` (repo-root `appsettings.json` + `.env`). Never commit `.env` or API keys.
+
+```text
+# BAD ? Google__ApiKey in appsettings.json
+# GOOD ? key in .env; models/order in appsettings.json Llm.Providers
+```
+
+- Fallback order is `Llm.Providers[]`, then each `Models[]`. First success wins.
+- Application code uses `ILLMClient` / `LlmClientFactory` / `FallbackLlmClient`. Do not hardcode a provider in `QuestionService`.
+- Google client class is `GoogleClient` in `GeminiClient.cs`. `CerebrasClient` exists but is not in the active provider list.
+- `EmbeddingService` reads `OLLAMA_EMBED_URL` and `OLLAMA_EMBEDDING_MODEL` from env, not the JSON `Embeddings` section.
+- Log try/fail with provider, model, HTTP status, and transient flag. Treat OpenRouter `:free` slugs as runtime availability, not guaranteed.
+- Keep fallback lists short and ordered (availability, latency, quality, cost). Do not append every model.

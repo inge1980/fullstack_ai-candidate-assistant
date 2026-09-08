@@ -1,0 +1,15 @@
+---
+description: Core engineering workflow
+alwaysApply: true
+---
+
+# Core engineering workflow
+
+- Follow the existing architecture before introducing new patterns.
+- Make the smallest change that solves the task.
+- Do not modify unrelated files.
+- Explain trade-offs before major architectural changes.
+- Consider security, error handling, performance and maintainability.
+- When requirements are ambiguous, identify the ambiguity before implementing.
+- Suggest tests for new business logic.
+- Never assume generated code is correct; explain why it works.

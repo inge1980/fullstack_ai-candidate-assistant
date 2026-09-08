@@ -1,0 +1,22 @@
+---
+description: Knowledge Markdown schema, chunking, and re-index after edits
+globs: knowledge/**/*.md
+alwaysApply: false
+---
+
+# Knowledge Markdown
+
+`knowledge/projects/*.md` is indexed. Skip `_template_project.md`. `knowledge/skills/` is not indexed.
+
+Follow `_template_project.md` frontmatter: `title`, `organization`, `role`, `environment`, `period`, `status`, `technologies`, `concepts`, `dependencies`, `links`.
+
+```text
+# BAD ? technologies lists tools only mentioned as alternatives
+# GOOD ? technologies = implemented stack
+```
+
+- Split on Markdown headings. Nested headings become `HeadingPath`. Headings are stripped from chunk content.
+- Typical sections: Overview, Context, Task, Challenge, Result, Technical Decisions, Implementation, Lessons Learned, Future Improvements.
+- After changing project docs, run `dotnet run --project src/tools/KnowledgeIndexer` from the repo root.
+- Indexer upserts by chunk id; deleted/renamed files need a table wipe then re-index.
+- If the product story of this repo changes, update `knowledge/projects/ai-candidate-assistant-rag.md` and `AGENTS.md`.
