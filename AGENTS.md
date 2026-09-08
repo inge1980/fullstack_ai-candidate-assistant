@@ -130,7 +130,7 @@ Config: `Configuration/AppConfiguration.cs`.
 
 ### Frontend (`src/frontend`)
 
-Vite + React + TypeScript + Tailwind. Chat UI posts `{ question }` to `POST /api/v1/Questions` via a Vite proxy (`/api` ? `http://localhost:5179`). Types live in `src/frontend/api/types.ts`; fetch lives in `src/frontend/api/questions.ts`. No CORS on the API. Swagger on `:5179` is unchanged.
+Vite + React + TypeScript + Tailwind. Chat UI posts `{ question }` to `POST /api/v1/Questions` via a Vite proxy (`/api` ? `http://localhost:5179`). Types live in `src/frontend/client/types.ts`; fetch lives in `src/frontend/client/questions.ts`. No CORS on the API. Swagger on `:5179` is unchanged.
 
 ---
 

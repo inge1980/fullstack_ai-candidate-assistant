@@ -20,7 +20,7 @@
     "noUncheckedSideEffectImports": true
   },
   "include": [
-    "api",
+    "client",
     "components",
     "App.tsx",
     "main.tsx",

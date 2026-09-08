@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { askQuestion } from "./api/questions";
+import { askQuestion } from "./client/questions";
 import { QuestionForm } from "./components/QuestionForm";
 import { MessageList, type ChatMessage } from "./components/MessageList";
 import { StatusBanner, type ChatStatus } from "./components/StatusBanner";
