@@ -9,6 +9,23 @@ export function restoreWrapOpportunities(text: string): string {
   return text.replace(/[\u00A0\u202F\u2007]/g, " ").replace(/\u2011/g, "-");
 }
 
+const BARE_HTTP_URL = /https?:\/\/[^\s<>"')]+/gi;
+
+/** Turn bare http(s) URLs into Markdown links. Skip destinations already in `[text](url)`. */
+export function linkifyBareUrls(text: string): string {
+  return text.replace(BARE_HTTP_URL, (url, offset: number, source: string) => {
+    if (source.slice(Math.max(0, offset - 2), offset) === "](") {
+      return url;
+    }
+
+    if (offset > 0 && source[offset - 1] === "<") {
+      return url;
+    }
+
+    return `[${url}](${url})`;
+  });
+}
+
 const markdownComponents: Components = {
   p: ({ children }) => (
     <p className="mb-3 leading-relaxed last:mb-0">{children}</p>
@@ -35,7 +52,7 @@ const markdownComponents: Components = {
     <a
       className="underline underline-offset-2 transition-colors hover:text-zinc-600"
       href={href}
-      rel="noreferrer"
+      rel="noopener noreferrer"
       target="_blank"
     >
       {children}
@@ -64,7 +81,7 @@ export function AssistantMarkdown({ content }: AssistantMarkdownProps) {
   return (
     <div className="break-words text-zinc-900">
       <Markdown components={markdownComponents}>
-        {restoreWrapOpportunities(content)}
+        {linkifyBareUrls(restoreWrapOpportunities(content))}
       </Markdown>
     </div>
   );
