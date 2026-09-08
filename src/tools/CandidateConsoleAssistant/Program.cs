@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Infrastructure.Configuration;
 
 const int retrievalLimit = 25; // Limit the number of results retrieved from the vector store
-const int promptContextLimit = 5;
+const int promptContextLimit = 10; // Limit the number of results included in the prompt context
 
 var promptPath =
     Path.Combine(
@@ -57,8 +57,10 @@ var knowledgeRetrievalService =
 // TEST: Retrieval evaluation code
 var questions = new[]
 {
+    "Gi meg topp 10 prosjekter du har gjort som inneholder html, css, sql eller javascript.",
+
     // Test broad technology experience
-    "What experience do you have with agile development?",
+    //"What experience do you have with agile development?",
 
     // Test document diversity
     //"What experience do you have working with AI or LLMs?",
