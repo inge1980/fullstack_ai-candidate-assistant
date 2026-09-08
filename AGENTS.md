@@ -25,9 +25,12 @@ ollama pull qllama/bge-small-en-v1.5
 dotnet run --project src/tools/KnowledgeIndexer
 dotnet run --project src/tools/CandidateConsoleAssistant
 dotnet run --project src/backend/Api
+npm install --prefix src/frontend
+npm run dev --prefix src/frontend
 ```
 
 - API: `http://localhost:5179` ? Swagger `/swagger`, `POST /api/v1/Questions`, smoke `GET /api/v1/llm/test`
+- UI: `http://localhost:5173` ? Vite proxies `/api` to `http://localhost:5179` (no CORS on the API)
 - Indexer `knowledgePath` is `cwd/knowledge/projects` ? run from repo root
 - Solution: `fullstack_ai-candidate-assistant.slnx` (.NET 10)
 - Shared config: root `appsettings.json` + `.env` via `AppConfiguration` (walks up to the `.slnx`). Copy `.env.example`. Never commit `.env`.
@@ -59,7 +62,7 @@ Intended retrieval (knowledge doc + console): top **10** from the store, top **5
 - Answer prompt must refuse unsupported claims (invented tech, responsibilities, projects, production use).
 - LLM providers are replaceable. Fallback order is `Llm.Providers[]` then each provider's `Models[]`.
 - Secrets stay in env (`Google__ApiKey`, `Groq__ApiKey`, `OpenRouter__ApiKey`). Non-secret provider/model lists live in `appsettings.json`.
-- No frontend, auth, or public deploy in this Module 4 backend.
+- Frontend is a Vite client of the API only. No RAG, embeddings, or LLM calls in the browser. No auth or public deploy in this stage.
 
 ---
 
@@ -78,6 +81,7 @@ src/backend/Application          Retrieval, questions, prompt templates
 src/backend/Infrastructure       Documents, embeddings, pgvector, LLM, config
 src/tools/KnowledgeIndexer       Ingest -> embed -> upsert
 src/tools/CandidateConsoleAssistant  Manual retrieval + prompt inspection
+src/frontend                     Vite + React + TypeScript + Tailwind chat UI
 ```
 
 ### Api (`src/backend/Api`)
@@ -123,6 +127,10 @@ Config: `Configuration/AppConfiguration.cs`.
 
 - **KnowledgeIndexer:** load -> chunk -> embed -> `InsertAsync`. Prints document/chunk stats. Does not delete rows for removed or renamed files.
 - **CandidateConsoleAssistant:** hardcoded eval questions; top 10 retrieval, top 5 prompt context; prints timing, combined/vector/metadata/evidence scores, heading, semantic type, content, and the built prompt.
+
+### Frontend (`src/frontend`)
+
+Vite + React + TypeScript + Tailwind. Chat UI posts `{ question }` to `POST /api/v1/Questions` via a Vite proxy (`/api` ? `http://localhost:5179`). Types live in `src/frontend/api/types.ts`; fetch lives in `src/frontend/api/questions.ts`. No CORS on the API. Swagger on `:5179` is unchanged.
 
 ---
 
@@ -175,6 +183,6 @@ GitHub source URLs: `GitHub:Owner`, `Repository`, `Branch`, `ProjectsFolder`. `Q
 - `EmbeddingService` ignores `appsettings.json` `Embeddings` / `Ollama` sections.
 - `EmbeddingService` reads `OLLAMA_*` from process env at type init. In console tools, call `AppConfiguration.Build()` before `new EmbeddingService()` so `.env` is loaded. The API already loads config first.
 - No automated tests, no retrieval eval dataset, no frontmatter schema validation.
-- Out of scope: React UI, auth, production deploy, candidate-to-job matching product, hybrid search.
+- Out of scope: auth, production deploy, candidate-to-job matching product, hybrid search.
 
 When changing RAG behavior, update this file and, if the product story changed, `knowledge/projects/ai-candidate-assistant-rag.md` (then re-index).

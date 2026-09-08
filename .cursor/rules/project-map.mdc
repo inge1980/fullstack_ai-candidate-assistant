@@ -13,10 +13,11 @@ Keep these layers separate:
 - **Infrastructure:** documents, embeddings, `VectorStore`, LLM HTTP clients.
 - **Application:** retrieval orchestration, prompts, question flow.
 - **Api / tools:** host and CLIs only; do not put RAG logic in controllers.
+- **Frontend:** Vite React UI under `src/frontend`; talks to the API only.
 
 ```text
 # BAD ? answer from model knowledge with no retrieval
 # GOOD ? retrieve evidence, then generate only from that context
 ```
 
-No frontend, auth, or public deploy in this Module 4 backend. Update AGENTS.md when project structure, important commands, architecture, or persistent pitfalls change.
+No auth or public deploy in this stage. Update AGENTS.md when project structure, important commands, architecture, or persistent pitfalls change.

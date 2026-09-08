@@ -1,0 +1,12 @@
+---
+description: End every answer with token usage for that turn
+alwaysApply: true
+---
+
+# Token usage footer
+
+After every user-facing answer, end with a single line:
+
+`(tokens used on this request: NNNNNN)`
+
+`NNNNNN` is the actual token count for that question/answer/processing turn (input + output for the turn, if only one number is available). Do not invent a count. If the platform does not provide usage for the turn, write `(tokens used on this request: unavailable)`.
