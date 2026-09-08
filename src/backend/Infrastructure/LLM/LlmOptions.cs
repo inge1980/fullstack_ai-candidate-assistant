@@ -2,7 +2,7 @@ namespace Infrastructure.LLM;
 
 public class LlmOptions
 {
-    public int MaxOutputTokens { get; init; } = 500;
+    public int MaxOutputTokens { get; init; } = 2048;
 
     public string ThinkingLevel { get; init; } = "minimal";
 

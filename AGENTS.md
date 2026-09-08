@@ -167,7 +167,7 @@ Postgres `document_chunks`: `id`, `source`, `heading_path`, `semantic_type`, `co
 
 Embeddings (required env): `OLLAMA_EMBED_URL`, `OLLAMA_EMBEDDING_MODEL`. Postgres: `ConnectionStrings__Postgres`.
 
-`Llm` in `appsettings.json`: `MaxOutputTokens`, `ThinkingLevel` / `ReasoningEffort`, ordered `Providers[]` with `Name`, `Models[]`, `TimeoutSeconds`. Current active order is Groq, then OpenRouter models, then Google. A configured `:free` OpenRouter slug can be invalid at runtime; treat availability as a runtime concern.
+`Llm` in `appsettings.json`: `MaxOutputTokens` (completion cap sent to every provider; Groq gpt-oss reasoning tokens count against it), `ThinkingLevel` / `ReasoningEffort`, ordered `Providers[]` with `Name`, `Models[]`, `TimeoutSeconds`. Current active order is Groq, then OpenRouter models, then Google. A configured `:free` OpenRouter slug can be invalid at runtime; treat availability as a runtime concern.
 
 Logs look like `[LLM] Trying: Groq / ?`, `[LLM] Failed: ? Status=400 Transient=False`, `[LLM] Provider succeeded: ?`. First success stops the chain; all failures aggregate.
 
