@@ -13,6 +13,8 @@ export function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [status, setStatus] = useState<ChatStatus>("empty");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editDraft, setEditDraft] = useState("");
   const locale = resolveAppLocale(i18n.resolvedLanguage ?? i18n.language);
 
   const isLoading = status === "loading";
@@ -34,6 +36,8 @@ export function App() {
 
     setMessages([userMessage]);
     setDraft("");
+    setEditDraft("");
+    setIsEditing(false);
     setErrorMessage(null);
     setStatus("loading");
 
@@ -57,6 +61,8 @@ export function App() {
 
   function handleReset() {
     setDraft("");
+    setEditDraft("");
+    setIsEditing(false);
     setMessages([]);
     setErrorMessage(null);
     setStatus("empty");
@@ -78,7 +84,24 @@ export function App() {
         hasMessages={messages.length > 0}
       />
 
-      <MessageList messages={messages} isLoading={isLoading} />
+      <MessageList
+        messages={messages}
+        isLoading={isLoading}
+        isEditingUser={isEditing}
+        editValue={editDraft}
+        onEditValueChange={setEditDraft}
+        onStartEdit={() => {
+          setEditDraft(previousQuestion);
+          setIsEditing(true);
+        }}
+        onCancelEdit={() => {
+          setIsEditing(false);
+          setEditDraft("");
+        }}
+        onResend={() => {
+          void ask(editDraft);
+        }}
+      />
 
       {messages.length === 0 ? (
         <QuestionForm
@@ -100,15 +123,17 @@ export function App() {
           >
             {t("app.askNewQuestion")}
           </button>
-          <button
-            className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-800"
-            type="button"
-            onClick={() => {
-              void ask(previousQuestion);
-            }}
-          >
-            {t("app.askSameQuestion")}
-          </button>
+          {isEditing ? null : (
+            <button
+              className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-800"
+              type="button"
+              onClick={() => {
+                void ask(previousQuestion);
+              }}
+            >
+              {t("app.askSameQuestion")}
+            </button>
+          )}
         </div>
       ) : null}
     </div>

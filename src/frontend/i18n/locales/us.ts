@@ -19,6 +19,9 @@ export const us = {
   chat: {
     you: "You",
     debugPrompt: "Prompt sent to the LLM",
+    editQuestion: "Edit question",
+    sendAgain: "Send again",
+    cancelEdit: "Cancel",
   },
   language: {
     englishUs: "English (US)",
