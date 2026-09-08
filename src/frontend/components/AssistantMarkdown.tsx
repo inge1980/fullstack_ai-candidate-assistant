@@ -1,6 +1,14 @@
 import Markdown from "react-markdown";
 import type { Components } from "react-markdown";
 
+/**
+ * Models often insert non-breaking spaces and non-breaking hyphens
+ * (Norwegian/French typography). Those block wrapping between tokens.
+ */
+export function restoreWrapOpportunities(text: string): string {
+  return text.replace(/[\u00A0\u202F\u2007]/g, " ").replace(/\u2011/g, "-");
+}
+
 const markdownComponents: Components = {
   p: ({ children }) => (
     <p className="mb-3 leading-relaxed last:mb-0">{children}</p>
@@ -54,8 +62,10 @@ type AssistantMarkdownProps = {
 
 export function AssistantMarkdown({ content }: AssistantMarkdownProps) {
   return (
-    <div className="text-zinc-900">
-      <Markdown components={markdownComponents}>{content}</Markdown>
+    <div className="break-words text-zinc-900">
+      <Markdown components={markdownComponents}>
+        {restoreWrapOpportunities(content)}
+      </Markdown>
     </div>
   );
 }
