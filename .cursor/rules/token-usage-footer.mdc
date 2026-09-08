@@ -1,5 +1,5 @@
 ---
-description: End every answer with token usage for that turn
+description: End every answer with a character-based token estimate
 alwaysApply: true
 ---
 
@@ -9,4 +9,11 @@ After every user-facing answer, end with a single line:
 
 `(tokens used on this request: NNNNNN)`
 
-`NNNNNN` is the actual token count for that question/answer/processing turn (input + output for the turn, if only one number is available). Do not invent a count. If the platform does not provide usage for the turn, write `(tokens used on this request: unavailable)`.
+This is a **guess, not real tokens** and not Cursor/provider billing.
+
+Estimate as `round(characterCount / 4)` using Unicode character length of:
+
+1. The current user message
+2. This assistant reply, excluding the footer line itself
+
+Do not use `unavailable`. Do not invent a provider usage API. Do not count rules, tools, or file contents you did not include in that character total.
