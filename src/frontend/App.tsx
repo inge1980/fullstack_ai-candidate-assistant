@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { askQuestion } from "./client/questions";
 import { QuestionForm } from "./components/QuestionForm";
@@ -15,9 +15,17 @@ export function App() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editDraft, setEditDraft] = useState("");
+  const askGenerationRef = useRef(0);
   const locale = resolveAppLocale(i18n.resolvedLanguage ?? i18n.language);
 
   const isLoading = status === "loading";
+  const needsLanguageReset =
+    draft.trim().length > 0 ||
+    editDraft.trim().length > 0 ||
+    messages.length > 0 ||
+    isEditing ||
+    isLoading ||
+    errorMessage !== null;
 
   const previousQuestion =
     messages.find((message) => message.role === "user")?.content ?? "";
@@ -27,6 +35,8 @@ export function App() {
     if (trimmed.length === 0 || isLoading) {
       return;
     }
+
+    const generation = ++askGenerationRef.current;
 
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
@@ -43,6 +53,10 @@ export function App() {
 
     try {
       const response = await askQuestion(trimmed, locale);
+      if (generation !== askGenerationRef.current) {
+        return;
+      }
+
       const assistantMessage: ChatMessage = {
         id: crypto.randomUUID(),
         role: "assistant",
@@ -52,6 +66,10 @@ export function App() {
       setMessages((current) => [...current, assistantMessage]);
       setStatus("idle");
     } catch (error) {
+      if (generation !== askGenerationRef.current) {
+        return;
+      }
+
       const message =
         error instanceof Error ? error.message : t("status.requestFailed");
       setErrorMessage(message);
@@ -60,6 +78,7 @@ export function App() {
   }
 
   function handleReset() {
+    askGenerationRef.current += 1;
     setDraft("");
     setEditDraft("");
     setIsEditing(false);
@@ -75,7 +94,7 @@ export function App() {
           <h1 className="text-xl font-semibold text-ink">M.I.N.D</h1>
           <p className="text-sm text-muted">{t("app.subtitle")}</p>
         </div>
-        <LanguageMenu />
+        <LanguageMenu needsReset={needsLanguageReset} onReset={handleReset} />
       </header>
 
       <StatusBanner

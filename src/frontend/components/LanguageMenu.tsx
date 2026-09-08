@@ -1,7 +1,13 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NO, US } from "country-flag-icons/react/3x2";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { resolveAppLocale, type AppLocale } from "../i18n/config";
+
+type LanguageMenuProps = {
+  needsReset: boolean;
+  onReset: () => void;
+};
 
 const options: {
   locale: AppLocale;
@@ -23,15 +29,17 @@ const options: {
   },
 ];
 
-export function LanguageMenu() {
+export function LanguageMenu({ needsReset, onReset }: LanguageMenuProps) {
   const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(false);
+  const [pendingLocale, setPendingLocale] = useState<AppLocale | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
   const locale = resolveAppLocale(i18n.resolvedLanguage ?? i18n.language);
   const current = options.find((option) => option.locale === locale) ?? options[0];
   const CurrentFlag = current.Flag;
   const currentName = t(current.nameKey);
+  const confirmOpen = pendingLocale !== null;
 
   useEffect(() => {
     if (!open) {
@@ -61,12 +69,41 @@ export function LanguageMenu() {
     };
   }, [open]);
 
-  async function selectLocale(next: AppLocale) {
-    setOpen(false);
-
+  async function applyLocale(next: AppLocale) {
     if (next !== locale) {
       await i18n.changeLanguage(next);
     }
+  }
+
+  function selectLocale(next: AppLocale) {
+    setOpen(false);
+
+    if (next === locale) {
+      return;
+    }
+
+    if (needsReset) {
+      setPendingLocale(next);
+      return;
+    }
+
+    void applyLocale(next);
+  }
+
+  const cancelSwitch = useCallback(() => {
+    setPendingLocale(null);
+  }, []);
+
+  function confirmSwitch() {
+    const next = pendingLocale;
+    setPendingLocale(null);
+
+    if (next === null) {
+      return;
+    }
+
+    onReset();
+    void applyLocale(next);
   }
 
   return (
@@ -132,6 +169,15 @@ export function LanguageMenu() {
           })}
         </ul>
       ) : null}
+      <ConfirmDialog
+        open={confirmOpen}
+        title={t("language.switchTitle")}
+        message={t("language.switchWarning")}
+        confirmLabel={t("language.switchConfirm")}
+        cancelLabel={t("language.switchCancel")}
+        onConfirm={confirmSwitch}
+        onCancel={cancelSwitch}
+      />
     </div>
   );
 }
