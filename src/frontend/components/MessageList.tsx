@@ -1,3 +1,5 @@
+import { AssistantMarkdown } from "./AssistantMarkdown";
+
 export type ChatMessage = {
   id: string;
   role: "user" | "assistant";
@@ -27,9 +29,14 @@ export function MessageList({ messages }: MessageListProps) {
           <p className="mb-1 text-xs font-medium uppercase tracking-wide opacity-70">
             {message.role === "user" ? "You" : "M.I.N.D"}
           </p>
-          <p className="whitespace-pre-wrap">{message.content}</p>
+          {message.role === "assistant" ? (
+            <AssistantMarkdown content={message.content} />
+          ) : (
+            <p className="whitespace-pre-wrap">{message.content}</p>
+          )}
         </li>
       ))}
     </ul>
   );
 }
+

@@ -295,6 +295,9 @@ FakesAssemblies/
 .ntvs_analysis.dat
 node_modules/
 
+# Vite production output (content-hashed bundles)
+src/frontend/dist/
+
 # Visual Studio 6 build log
 *.plg
 
