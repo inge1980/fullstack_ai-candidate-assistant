@@ -21,14 +21,14 @@ export function StatusBanner({
 
   if (status === "error") {
     return (
-      <p className="text-sm text-red-700" role="alert">
+      <p className="text-sm text-danger" role="alert">
         {errorMessage ?? t("status.errorFallback")}
       </p>
     );
   }
 
   if (!hasMessages) {
-    return <p className="text-sm text-zinc-600">{t("status.empty")}</p>;
+    return <p className="text-sm text-muted">{t("status.empty")}</p>;
   }
 
   return null;

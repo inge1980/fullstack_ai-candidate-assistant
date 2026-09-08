@@ -72,8 +72,8 @@ export function App() {
     <div className="mx-auto flex min-h-screen max-w-2xl flex-col gap-4 px-4 py-8">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900">M.I.N.D</h1>
-          <p className="text-sm text-zinc-600">{t("app.subtitle")}</p>
+          <h1 className="text-xl font-semibold text-ink">M.I.N.D</h1>
+          <p className="text-sm text-muted">{t("app.subtitle")}</p>
         </div>
         <LanguageMenu />
       </header>
@@ -117,7 +117,7 @@ export function App() {
       {messages.length > 0 && !isLoading ? (
         <div className="flex flex-wrap gap-2">
           <button
-            className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-white transition-colors hover:bg-zinc-700"
+            className="cursor-pointer rounded-md bg-invert px-4 py-2 text-invert-fg transition-colors hover:bg-invert-hover"
             type="button"
             onClick={handleReset}
           >
@@ -125,7 +125,7 @@ export function App() {
           </button>
           {isEditing ? null : (
             <button
-              className="cursor-pointer rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-800 transition-colors hover:border-zinc-400 hover:bg-zinc-100"
+              className="cursor-pointer rounded-md border border-line bg-surface px-4 py-2 text-ink transition-colors hover:border-line-focus hover:bg-surface-muted"
               type="button"
               onClick={() => {
                 void ask(previousQuestion);

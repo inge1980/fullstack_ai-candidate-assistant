@@ -28,7 +28,7 @@ export function QuestionForm({
       </label>
       <input
         id="question"
-        className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-zinc-500"
+        className="min-w-0 flex-1 rounded-md border border-line bg-surface px-3 py-2 text-ink outline-none focus:border-line-focus"
         type="text"
         name="question"
         autoComplete="off"
@@ -38,7 +38,7 @@ export function QuestionForm({
         onChange={(event) => onChange(event.target.value)}
       />
       <button
-        className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:bg-zinc-400 disabled:hover:bg-zinc-400"
+        className="cursor-pointer rounded-md bg-invert px-4 py-2 text-invert-fg transition-colors hover:bg-invert-hover disabled:cursor-not-allowed disabled:bg-invert-disabled disabled:hover:bg-invert-disabled"
         type="submit"
         disabled={disabled || value.trim().length === 0}
       >

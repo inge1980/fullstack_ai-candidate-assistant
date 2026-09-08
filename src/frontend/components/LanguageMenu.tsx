@@ -76,14 +76,14 @@ export function LanguageMenu() {
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-label={currentName}
-        className="flex cursor-pointer items-center gap-1 rounded-md border border-zinc-300 px-1.5 py-1.5 text-zinc-800 transition-colors hover:border-zinc-400 hover:bg-zinc-100"
+        className="flex cursor-pointer items-center gap-1 rounded-md border border-line bg-surface px-1.5 py-1.5 text-ink transition-colors hover:border-line-focus hover:bg-surface-muted"
         type="button"
         onClick={() => setOpen((value) => !value)}
       >
         <CurrentFlag aria-hidden="true" className="h-5 w-7 rounded-sm" />
         <svg
           aria-hidden="true"
-          className={`h-3.5 w-3.5 shrink-0 text-zinc-600 transition-transform ${
+          className={`h-3.5 w-3.5 shrink-0 text-muted transition-transform ${
             open ? "rotate-180" : ""
           }`}
           fill="none"
@@ -101,7 +101,7 @@ export function LanguageMenu() {
       </button>
       {open ? (
         <ul
-          className="absolute right-0 z-10 mt-1 min-w-[9rem] rounded-md border border-zinc-200 bg-white py-1 shadow-md"
+          className="absolute right-0 z-10 mt-1 min-w-[9rem] rounded-md border border-line-soft bg-surface py-1 shadow-md"
           id={menuId}
           role="listbox"
           aria-label={t("language.choose")}
@@ -114,8 +114,8 @@ export function LanguageMenu() {
             return (
               <li key={option.locale} role="option" aria-selected={selected}>
                 <button
-                  className={`flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left text-sm text-zinc-800 transition-colors hover:bg-zinc-100 ${
-                    selected ? "bg-zinc-50 font-medium" : ""
+                  className={`flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left text-sm text-ink transition-colors hover:bg-surface-muted ${
+                    selected ? "bg-surface-muted font-medium" : ""
                   }`}
                   type="button"
                   aria-label={name}

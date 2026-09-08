@@ -1,10 +1,62 @@
 @import "tailwindcss";
 
+:root {
+  color-scheme: light;
+  --page: #f4f4f5;
+  --surface: #ffffff;
+  --surface-muted: #f4f4f5;
+  --ink: #18181b;
+  --muted: #52525b;
+  --line: #d4d4d8;
+  --line-soft: #e4e4e7;
+  --line-focus: #71717a;
+  --invert: #18181b;
+  --invert-hover: #3f3f46;
+  --invert-fg: #ffffff;
+  --invert-disabled: #a1a1aa;
+  --danger: #b91c1c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page: #09090b;
+    --surface: #18181b;
+    --surface-muted: #27272a;
+    --ink: #fafafa;
+    --muted: #a1a1aa;
+    --line: #3f3f46;
+    --line-soft: #27272a;
+    --line-focus: #a1a1aa;
+    --invert: #e4e4e7;
+    --invert-hover: #f4f4f5;
+    --invert-fg: #18181b;
+    --invert-disabled: #52525b;
+    --danger: #f87171;
+  }
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-line-focus: var(--line-focus);
+  --color-invert: var(--invert);
+  --color-invert-hover: var(--invert-hover);
+  --color-invert-fg: var(--invert-fg);
+  --color-invert-disabled: var(--invert-disabled);
+  --color-danger: var(--danger);
+}
+
 body {
   margin: 0;
   min-height: 100vh;
-  background: #f4f4f5;
-  color: #18181b;
+  background: var(--page);
+  color: var(--ink);
   font-family:
     ui-sans-serif,
     system-ui,

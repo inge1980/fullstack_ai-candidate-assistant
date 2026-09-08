@@ -25,7 +25,7 @@ function GeneratingIndicator() {
 
   return (
     <li
-      className="mr-8 rounded-md border border-zinc-200 bg-white px-3 py-2 text-zinc-900"
+      className="mr-8 rounded-md border border-line-soft bg-surface px-3 py-2 text-ink"
       aria-live="polite"
     >
       <p className="mb-1 text-xs font-medium uppercase tracking-wide opacity-70">
@@ -33,7 +33,7 @@ function GeneratingIndicator() {
       </p>
       <div className="flex items-center gap-3" role="status">
         <svg
-          className="size-5 shrink-0 animate-spin text-zinc-500"
+          className="size-5 shrink-0 animate-spin text-muted"
           viewBox="0 0 24 24"
           fill="none"
           aria-hidden="true"
@@ -52,7 +52,7 @@ function GeneratingIndicator() {
             d="M12 2a10 10 0 0 1 10 10h-3a7 7 0 0 0-7-7V2z"
           />
         </svg>
-        <p className="text-sm text-zinc-700">{t("status.loading")}</p>
+        <p className="text-sm text-muted">{t("status.loading")}</p>
       </div>
     </li>
   );
@@ -105,7 +105,7 @@ function UserQuestion({
         {canEdit && !isEditing ? (
           <button
             aria-label={t("chat.editQuestion")}
-            className="cursor-pointer rounded p-1 text-white/80 transition-colors hover:bg-white/15 hover:text-white"
+            className="cursor-pointer rounded p-1 text-invert-fg/80 transition-colors hover:bg-invert-fg/15 hover:text-invert-fg"
             type="button"
             onClick={onStartEdit}
           >
@@ -140,7 +140,7 @@ function UserQuestion({
           <textarea
             ref={textareaRef}
             id={fieldId}
-            className="min-h-20 w-full resize-y rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-zinc-500"
+            className="min-h-20 w-full resize-y rounded-md border border-line bg-surface px-3 py-2 text-ink outline-none focus:border-line-focus"
             name="edited-question"
             rows={3}
             value={editValue}
@@ -154,14 +154,14 @@ function UserQuestion({
           />
           <div className="flex flex-wrap gap-2">
             <button
-              className="cursor-pointer rounded-md bg-white px-3 py-1.5 text-sm text-zinc-900 transition-colors hover:bg-zinc-200 disabled:cursor-not-allowed disabled:bg-zinc-400 disabled:hover:bg-zinc-400"
+              className="cursor-pointer rounded-md bg-surface px-3 py-1.5 text-sm text-ink transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:bg-invert-disabled disabled:text-invert-fg disabled:hover:bg-invert-disabled"
               type="submit"
               disabled={editValue.trim().length === 0}
             >
               {t("chat.sendAgain")}
             </button>
             <button
-              className="cursor-pointer rounded-md border border-white/40 px-3 py-1.5 text-sm text-white transition-colors hover:border-white/70 hover:bg-white/15"
+              className="cursor-pointer rounded-md border border-invert-fg/40 px-3 py-1.5 text-sm text-invert-fg transition-colors hover:border-invert-fg/70 hover:bg-invert-fg/15"
               type="button"
               onClick={onCancelEdit}
             >
@@ -202,8 +202,8 @@ export function MessageList({
           key={message.id}
           className={
             message.role === "user"
-              ? "ml-8 rounded-md bg-zinc-900 px-3 py-2 text-white"
-              : "mr-8 rounded-md border border-zinc-200 bg-white px-3 py-2 text-zinc-900"
+              ? "ml-8 rounded-md bg-invert px-3 py-2 text-invert-fg"
+              : "mr-8 rounded-md border border-line-soft bg-surface px-3 py-2 text-ink"
           }
         >
           {message.role === "user" ? (
@@ -224,11 +224,11 @@ export function MessageList({
               </p>
               <AssistantMarkdown content={message.content} />
               {message.prompt ? (
-                <details className="mt-3 border-t border-zinc-200 pt-2">
-                  <summary className="cursor-pointer rounded px-1 py-0.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900">
+                <details className="mt-3 border-t border-line-soft pt-2">
+                  <summary className="cursor-pointer rounded px-1 py-0.5 text-xs font-medium text-muted transition-colors hover:bg-surface-muted hover:text-ink">
                     {t("chat.debugPrompt")}
                   </summary>
-                  <pre className="mt-2 max-h-96 overflow-auto whitespace-pre-wrap break-words text-xs text-zinc-700">
+                  <pre className="mt-2 max-h-96 overflow-auto whitespace-pre-wrap break-words text-xs text-muted">
                     {message.prompt}
                   </pre>
                 </details>

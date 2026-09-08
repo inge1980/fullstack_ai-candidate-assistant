@@ -50,7 +50,7 @@ const markdownComponents: Components = {
   ),
   a: ({ href, children }) => (
     <a
-      className="underline underline-offset-2 transition-colors hover:text-zinc-600"
+      className="underline underline-offset-2 transition-colors hover:text-muted"
       href={href}
       rel="noopener noreferrer"
       target="_blank"
@@ -59,7 +59,7 @@ const markdownComponents: Components = {
     </a>
   ),
   pre: ({ children }) => (
-    <pre className="mb-3 overflow-x-auto rounded-md bg-zinc-100 p-3 text-sm last:mb-0">
+    <pre className="mb-3 overflow-x-auto rounded-md bg-surface-muted p-3 text-sm last:mb-0">
       {children}
     </pre>
   ),
@@ -67,7 +67,7 @@ const markdownComponents: Components = {
     className ? (
       <code className="font-mono text-sm">{children}</code>
     ) : (
-      <code className="rounded bg-zinc-100 px-1 py-0.5 font-mono text-sm">
+      <code className="rounded bg-surface-muted px-1 py-0.5 font-mono text-sm">
         {children}
       </code>
     ),
@@ -79,7 +79,7 @@ type AssistantMarkdownProps = {
 
 export function AssistantMarkdown({ content }: AssistantMarkdownProps) {
   return (
-    <div className="break-words text-zinc-900">
+    <div className="break-words text-ink">
       <Markdown components={markdownComponents}>
         {linkifyBareUrls(restoreWrapOpportunities(content))}
       </Markdown>
