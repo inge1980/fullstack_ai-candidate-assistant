@@ -18,6 +18,7 @@ export const nb = {
   },
   chat: {
     you: "Deg",
+    debugPrompt: "Prompt sendt til LLM",
   },
   language: {
     englishUs: "English (US)",

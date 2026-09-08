@@ -182,7 +182,8 @@ public sealed class QuestionService(
 
         return new AskQuestionResponse(
             Answer: answer,
-            Sources: sources);
+            Sources: sources,
+            Prompt: includeDebug ? prompt : null);
     }
 
     private static async Task<string> LoadAnswerPromptAsync(

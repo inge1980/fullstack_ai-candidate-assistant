@@ -28,6 +28,7 @@ export type QuestionSource = {
 export type AskQuestionResponse = {
   answer: string;
   sources: QuestionSource[];
+  prompt?: string | null;
 };
 
 /** ASP.NET Core ProblemDetails (400 validation) */

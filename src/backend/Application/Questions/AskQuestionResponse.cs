@@ -2,5 +2,5 @@ namespace Application.Questions;
 
 public sealed record AskQuestionResponse(
     string Answer,
-    IReadOnlyList<QuestionSource> Sources
-);
+    IReadOnlyList<QuestionSource> Sources,
+    string? Prompt = null);

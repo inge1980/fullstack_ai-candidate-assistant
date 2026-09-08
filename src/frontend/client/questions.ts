@@ -20,7 +20,11 @@ export async function askQuestion(
 ): Promise<AskQuestionResponse> {
   const body: AskQuestionRequest = { question, locale };
 
-  const response = await fetch("/api/v1/Questions", {
+  const url = import.meta.env.DEV
+    ? "/api/v1/Questions?includeDebug=true"
+    : "/api/v1/Questions";
+
+  const response = await fetch(url, {
     method: "POST",
     headers: {
       Accept: "application/json",

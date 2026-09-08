@@ -43,6 +43,7 @@ export function App() {
         id: crypto.randomUUID(),
         role: "assistant",
         content: response.answer,
+        prompt: response.prompt ?? undefined,
       };
       setMessages((current) => [...current, assistantMessage]);
       setStatus("idle");

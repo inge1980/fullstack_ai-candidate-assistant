@@ -5,6 +5,7 @@ export type ChatMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
+  prompt?: string;
 };
 
 type MessageListProps = {
@@ -72,7 +73,19 @@ export function MessageList({ messages, isLoading = false }: MessageListProps) {
             {message.role === "user" ? t("chat.you") : "M.I.N.D"}
           </p>
           {message.role === "assistant" ? (
-            <AssistantMarkdown content={message.content} />
+            <>
+              <AssistantMarkdown content={message.content} />
+              {message.prompt ? (
+                <details className="mt-3 border-t border-zinc-200 pt-2">
+                  <summary className="cursor-pointer text-xs font-medium text-zinc-600">
+                    {t("chat.debugPrompt")}
+                  </summary>
+                  <pre className="mt-2 max-h-96 overflow-auto whitespace-pre-wrap break-words text-xs text-zinc-700">
+                    {message.prompt}
+                  </pre>
+                </details>
+              ) : null}
+            </>
           ) : (
             <p className="whitespace-pre-wrap">{message.content}</p>
           )}
