@@ -1,0 +1,33 @@
+---
+description: React + Vite + Tailwind frontend; API client separate from UI
+globs: src/frontend/**
+alwaysApply: false
+---
+
+# React frontend
+
+Use React + TypeScript + Vite + Tailwind CSS. Put the app under `src/frontend`.
+
+Keep the frontend simple, production-oriented, and visually restrained. Prefer small, reusable functional components and semantic HTML.
+
+Use the current Tailwind CSS setup for Vite. Do not introduce legacy Tailwind configuration unless required by the installed version.
+
+Do not modify backend code unless the frontend cannot work without it. Do not add a state-management library, UI component library, or other dependency unless explicitly requested or there is a clear need; explain why if you add one.
+
+```text
+# BAD  fetch('/api/v1/Questions') inside a presentational component
+# GOOD  UI component receives data/callbacks; API types live in a client module
+
+# BAD  reimplement retrieval, scoring, or prompt rules in React
+# GOOD  POST the question; render answer, sources, loading, error, empty, success
+
+# BAD  duplicate backend DTOs without checking the API contract
+# GOOD  keep frontend request/response types aligned with the existing .NET API
+```
+
+- Keep API communication out of presentational UI components.
+- Put HTTP/API logic in a dedicated client module.
+- Keep frontend state local (`useState` / context) unless complexity requires more.
+- Align request/response types with the existing .NET API contract (`AskQuestionRequest`, `AskQuestionResponse`, and related DTOs).
+- Handle loading, error, empty, and success states explicitly.
+- Do not duplicate backend business logic in the frontend.
