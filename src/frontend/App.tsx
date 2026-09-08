@@ -117,7 +117,7 @@ export function App() {
       {messages.length > 0 && !isLoading ? (
         <div className="flex flex-wrap gap-2">
           <button
-            className="rounded-md bg-zinc-900 px-4 py-2 text-white"
+            className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-white transition-colors hover:bg-zinc-700"
             type="button"
             onClick={handleReset}
           >
@@ -125,7 +125,7 @@ export function App() {
           </button>
           {isEditing ? null : (
             <button
-              className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-800"
+              className="cursor-pointer rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-800 transition-colors hover:border-zinc-400 hover:bg-zinc-100"
               type="button"
               onClick={() => {
                 void ask(previousQuestion);

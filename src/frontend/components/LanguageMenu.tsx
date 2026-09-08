@@ -76,7 +76,7 @@ export function LanguageMenu() {
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-label={currentName}
-        className="flex items-center gap-1 rounded-md border border-zinc-300 px-1.5 py-1.5 text-zinc-800 hover:bg-zinc-100"
+        className="flex cursor-pointer items-center gap-1 rounded-md border border-zinc-300 px-1.5 py-1.5 text-zinc-800 transition-colors hover:border-zinc-400 hover:bg-zinc-100"
         type="button"
         onClick={() => setOpen((value) => !value)}
       >
@@ -114,7 +114,7 @@ export function LanguageMenu() {
             return (
               <li key={option.locale} role="option" aria-selected={selected}>
                 <button
-                  className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-zinc-800 hover:bg-zinc-100 ${
+                  className={`flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left text-sm text-zinc-800 transition-colors hover:bg-zinc-100 ${
                     selected ? "bg-zinc-50 font-medium" : ""
                   }`}
                   type="button"

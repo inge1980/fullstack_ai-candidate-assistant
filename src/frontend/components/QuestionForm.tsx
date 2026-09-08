@@ -38,7 +38,7 @@ export function QuestionForm({
         onChange={(event) => onChange(event.target.value)}
       />
       <button
-        className="rounded-md bg-zinc-900 px-4 py-2 text-white disabled:cursor-not-allowed disabled:bg-zinc-400"
+        className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:bg-zinc-400 disabled:hover:bg-zinc-400"
         type="submit"
         disabled={disabled || value.trim().length === 0}
       >

@@ -33,7 +33,7 @@ const markdownComponents: Components = {
   ),
   a: ({ href, children }) => (
     <a
-      className="underline underline-offset-2"
+      className="underline underline-offset-2 transition-colors hover:text-zinc-600"
       href={href}
       rel="noreferrer"
       target="_blank"

@@ -105,7 +105,7 @@ function UserQuestion({
         {canEdit && !isEditing ? (
           <button
             aria-label={t("chat.editQuestion")}
-            className="rounded p-1 text-white/80 hover:bg-white/10 hover:text-white"
+            className="cursor-pointer rounded p-1 text-white/80 transition-colors hover:bg-white/15 hover:text-white"
             type="button"
             onClick={onStartEdit}
           >
@@ -154,14 +154,14 @@ function UserQuestion({
           />
           <div className="flex flex-wrap gap-2">
             <button
-              className="rounded-md bg-white px-3 py-1.5 text-sm text-zinc-900 disabled:cursor-not-allowed disabled:bg-zinc-400"
+              className="cursor-pointer rounded-md bg-white px-3 py-1.5 text-sm text-zinc-900 transition-colors hover:bg-zinc-200 disabled:cursor-not-allowed disabled:bg-zinc-400 disabled:hover:bg-zinc-400"
               type="submit"
               disabled={editValue.trim().length === 0}
             >
               {t("chat.sendAgain")}
             </button>
             <button
-              className="rounded-md border border-white/40 px-3 py-1.5 text-sm text-white hover:bg-white/10"
+              className="cursor-pointer rounded-md border border-white/40 px-3 py-1.5 text-sm text-white transition-colors hover:border-white/70 hover:bg-white/15"
               type="button"
               onClick={onCancelEdit}
             >
@@ -225,7 +225,7 @@ export function MessageList({
               <AssistantMarkdown content={message.content} />
               {message.prompt ? (
                 <details className="mt-3 border-t border-zinc-200 pt-2">
-                  <summary className="cursor-pointer text-xs font-medium text-zinc-600">
+                  <summary className="cursor-pointer rounded px-1 py-0.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900">
                     {t("chat.debugPrompt")}
                   </summary>
                   <pre className="mt-2 max-h-96 overflow-auto whitespace-pre-wrap break-words text-xs text-zinc-700">
