@@ -87,13 +87,14 @@ The project includes a console-based retrieval evaluation tool that runs represe
 
 The intended workflow is:
 
-1. A user provides a job description or candidate-oriented question.
-2. The backend generates an embedding for the query.
-3. PostgreSQL with pgvector performs semantic similarity search against the indexed project knowledge.
-4. Relevant project sections and metadata are retrieved.
-5. Retrieved evidence is assembled into an LLM prompt.
-6. A configured LLM provider and model generate a grounded response.
-7. Source references are returned alongside the generated answer.
+1. A user provides a job description or candidate-oriented question, with a UI locale of `us` or `nb`.
+2. If the locale is `nb`, the backend translates the question into English for retrieval. Indexed Markdown stays English.
+3. The backend generates an embedding for the English query.
+4. PostgreSQL with pgvector performs semantic similarity search against the indexed project knowledge.
+5. Relevant project sections and metadata are retrieved.
+6. Retrieved evidence is assembled into an English LLM prompt, with an instruction to answer in the requested language.
+7. A configured LLM provider and model generate a grounded response. For `nb`, the answer is fluent Norwegian Bokmål rather than a literal translation of English evidence.
+8. Source references are returned alongside the generated answer.
 
 The project is intended to demonstrate practical AI, LLM, and RAG application development rather than simply calling an LLM with a large static prompt.
 
@@ -122,7 +123,7 @@ Project knowledge is maintained as version-controlled Markdown with YAML frontma
 
 During ingestion, project documents are parsed into semantic sections and enriched with structured metadata such as role, technologies, concepts, organization, environment, period, and status. Embeddings are generated for the resulting chunks and stored alongside their metadata.
 
-At query time, a natural-language question is converted into an embedding using the same embedding model. PostgreSQL with pgvector retrieves semantically related project sections, which are then assembled into context for the LLM.
+At query time, a natural-language question is converted into an embedding using the same embedding model. When the request locale is `nb`, that question is first translated to English so the embedding matches the English knowledge base. PostgreSQL with pgvector retrieves semantically related project sections, which are then assembled into English context for the LLM. The generation step may still answer in Norwegian Bokmål when the locale is `nb`.
 
 The LLM is responsible for interpreting and synthesizing the retrieved evidence, while the retrieval system is responsible for determining which documented project experience is relevant.
 
@@ -825,7 +826,9 @@ The current ingestion flow is:
 
 The current query flow is:
 
-`User question` -> `Query embedding` -> `pgvector similarity search` -> `Top-10 chunks` -> `Top-5 prompt context`
+`User question` -> `Optional English query translation (locale nb)` -> `Query embedding` -> `pgvector similarity search` -> `Top-10 chunks` -> `Top-5 prompt context`
+
+Knowledge chunks remain English. Locale `nb` requests a fluent Norwegian Bokmål answer from the LLM; locale `us` requests American English. The answer-prompt template itself stays English.
 
 The LLM flow is:
 
@@ -1151,7 +1154,7 @@ The main implementation flow is:
 11. Each chunk is passed through the local embedding model.
 12. The resulting 384-dimensional vectors are stored in PostgreSQL.
 13. pgvector provides vector similarity search over the stored embeddings.
-14. A user question is converted into an embedding using the same model.
+14. A user question is converted into an embedding using the same model. For locale `nb`, the question is translated to English before this step.
 15. The query vector is compared against the stored document vectors.
 16. The top 10 ranked chunks are retrieved.
 17. The top 5 retrieved chunks are selected as prompt context.
@@ -1169,7 +1172,7 @@ The main implementation flow is:
 
 The current pipeline is:
 
-`Markdown` -> `Frontmatter parsing` -> `Document loading` -> `Section chunking` -> `Metadata propagation` -> `Embedding generation` -> `PostgreSQL + pgvector` -> `Query embedding` -> `Similarity search` -> `Top-10 retrieved chunks` -> `Top-5 prompt context` -> `LLM provider/model fallback` -> `Generated answer + source references`
+`Markdown` -> `Frontmatter parsing` -> `Document loading` -> `Section chunking` -> `Metadata propagation` -> `Embedding generation` -> `PostgreSQL + pgvector` -> `Optional English query translation` -> `Query embedding` -> `Similarity search` -> `Top-10 retrieved chunks` -> `Top-5 prompt context` -> `LLM provider/model fallback` -> `Generated answer in the requested language + source references`
 
 The evaluation pipeline is:
 

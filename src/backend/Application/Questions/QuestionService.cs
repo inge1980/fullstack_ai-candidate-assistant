@@ -19,6 +19,7 @@ public sealed class QuestionService(
 
     public async Task<AskQuestionResponse> AskAsync(
         string question,
+        string locale = QuestionLocale.Us,
         bool includeDebug = false,
         CancellationToken cancellationToken = default,
         IConfiguration configuration = null!)
@@ -30,6 +31,26 @@ public sealed class QuestionService(
                 nameof(question));
         }
 
+        locale = QuestionLocale.Normalize(locale);
+
+        var client = llmClientFactory.Create();
+
+        var retrievalQuery = question;
+
+        if (QuestionLocale.RequiresQueryTranslation(locale))
+        {
+            var translationStopwatch = Stopwatch.StartNew();
+
+            retrievalQuery =
+                await TranslateQueryToEnglishAsync(
+                    client,
+                    question,
+                    cancellationToken);
+
+            translationStopwatch.Stop();
+            Console.WriteLine($"[Timing] Query translation: {translationStopwatch.ElapsedMilliseconds} ms");
+        }
+
         // --------------------------------------------------------
         // 1. Retrieve and rank knowledge
         // --------------------------------------------------------
@@ -38,7 +59,7 @@ public sealed class QuestionService(
 
         var retrieval =
             await knowledgeRetrievalService.RetrieveAsync(
-                query: question,
+                query: retrievalQuery,
                 retrievalLimit: RetrievalLimit,
                 cancellationToken: cancellationToken);
 
@@ -101,7 +122,10 @@ public sealed class QuestionService(
         var prompt =
             promptTemplate
                 .Replace("{{question}}", question)
-                .Replace("{{context}}", context);
+                .Replace("{{context}}", context)
+                .Replace(
+                    "{{answer_language_instruction}}",
+                    QuestionLocale.AnswerLanguageInstruction(locale));
 
         promptBuildStopwatch.Stop();
         Console.WriteLine($"[Timing] Prompt build: {promptBuildStopwatch.ElapsedMilliseconds} ms");
@@ -111,9 +135,6 @@ public sealed class QuestionService(
         // --------------------------------------------------------
 
         var llmStopwatch = Stopwatch.StartNew();
-
-        var client =
-            llmClientFactory.Create();
 
         var answer =
             await client.GenerateAsync(
@@ -172,7 +193,7 @@ public sealed class QuestionService(
                 AppContext.BaseDirectory,
                 "Prompts",
                 "answer",
-                "answer-prompt-v6.md");
+                "answer-prompt-v7.md");
 
         if (!File.Exists(promptPath))
         {
@@ -183,6 +204,40 @@ public sealed class QuestionService(
         return await File.ReadAllTextAsync(
             promptPath,
             cancellationToken);
+    }
+
+    private static async Task<string> TranslateQueryToEnglishAsync(
+        ILLMClient client,
+        string question,
+        CancellationToken cancellationToken)
+    {
+        var promptPath =
+            Path.Combine(
+                AppContext.BaseDirectory,
+                "Prompts",
+                "translate",
+                "query-translate-prompt-v1.md");
+
+        if (!File.Exists(promptPath))
+        {
+            throw new FileNotFoundException(
+                $"Could not find query translate prompt at: {promptPath}");
+        }
+
+        var promptTemplate =
+            await File.ReadAllTextAsync(promptPath, cancellationToken);
+
+        var prompt =
+            promptTemplate.Replace("{{question}}", question);
+
+        var translated =
+            (await client.GenerateAsync(prompt, cancellationToken))
+            .Trim()
+            .Trim('"');
+
+        return string.IsNullOrWhiteSpace(translated)
+            ? question
+            : translated;
     }
 
     private static string GetProjectId(

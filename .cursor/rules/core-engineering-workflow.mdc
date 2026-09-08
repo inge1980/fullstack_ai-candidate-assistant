@@ -13,3 +13,5 @@ alwaysApply: true
 - When requirements are ambiguous, identify the ambiguity before implementing.
 - Suggest tests for new business logic.
 - Never assume generated code is correct; explain why it works.
+- Create and edit text files as UTF-8 without BOM so Scandinavian letters stay intact (æ, ø, å, Æ, Ø, Å). Do not write source, Markdown, JSON, prompts, or i18n as Windows-1252, UTF-16, or UTF-8 with BOM.
+- When creating files through the Windows shell, set encoding explicitly (PowerShell utf8NoBOM); do not rely on the console default. Binary files are unchanged.

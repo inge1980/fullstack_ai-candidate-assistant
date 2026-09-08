@@ -31,6 +31,7 @@ public class QuestionsController(IQuestionService service) : ControllerBase
 
         var response = await service.AskAsync(
             request.Question,
+            QuestionLocale.Normalize(request.Locale),
             includeDebug,
             cancellationToken);
 

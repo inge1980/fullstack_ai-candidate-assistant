@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { AssistantMarkdown } from "./AssistantMarkdown";
 
 export type ChatMessage = {
@@ -11,6 +12,8 @@ type MessageListProps = {
 };
 
 export function MessageList({ messages }: MessageListProps) {
+  const { t } = useTranslation();
+
   if (messages.length === 0) {
     return null;
   }
@@ -27,7 +30,7 @@ export function MessageList({ messages }: MessageListProps) {
           }
         >
           <p className="mb-1 text-xs font-medium uppercase tracking-wide opacity-70">
-            {message.role === "user" ? "You" : "M.I.N.D"}
+            {message.role === "user" ? t("chat.you") : "M.I.N.D"}
           </p>
           {message.role === "assistant" ? (
             <AssistantMarkdown content={message.content} />

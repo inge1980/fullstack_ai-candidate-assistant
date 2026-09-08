@@ -1,6 +1,7 @@
 /** Mirrors Application.Questions.AskQuestionRequest */
 export type AskQuestionRequest = {
   question: string;
+  locale: "us" | "nb";
 };
 
 /** Mirrors Application.Questions.QuestionRelevance */

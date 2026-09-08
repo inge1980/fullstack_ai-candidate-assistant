@@ -45,7 +45,7 @@ Ingestion:
 
 Query (API):
 
-`POST /api/v1/Questions` -> query embed -> pgvector cosine search -> `MetadataEvidenceScorer` -> sort by combined score -> take prompt context -> `answer-prompt-v6.md` (`{{question}}`, `{{context}}`) -> `LlmClientFactory` / `FallbackLlmClient` -> answer + GitHub source URLs
+`POST /api/v1/Questions` (`question`, `locale` `us`|`nb`) -> if `nb`, LLM-translate the question to English (`query-translate-prompt-v1.md`) -> query embed (English) -> pgvector cosine search -> `MetadataEvidenceScorer` -> sort by combined score -> take prompt context -> `answer-prompt-v7.md` (`{{question}}` original text, `{{context}}` English chunks, `{{answer_language_instruction}}`) -> `LlmClientFactory` / `FallbackLlmClient` -> answer in the requested language + GitHub source URLs
 
 Eval (console):
 
@@ -60,6 +60,7 @@ Intended retrieval (knowledge doc + console): top **10** from the store, top **5
 - Same embedding model for documents and queries. Changing the model or dimensions requires a full re-index.
 - Frontmatter `technologies` is the declared stack, not every technology mentioned in prose.
 - Answer prompt must refuse unsupported claims (invented tech, responsibilities, projects, production use).
+- Knowledge, embeddings, retrieval, and the answer-prompt template stay English. `locale: nb` translates the user question to English before embedding and asks the LLM for fluent Norwegian Bokmål, not a literal translation. `locale: us` skips translation and answers in American English.
 - LLM providers are replaceable. Fallback order is `Llm.Providers[]` then each provider's `Models[]`.
 - Secrets stay in env (`Google__ApiKey`, `Groq__ApiKey`, `OpenRouter__ApiKey`). Non-secret provider/model lists live in `appsettings.json`.
 - Frontend is a Vite client of the API only. No RAG, embeddings, or LLM calls in the browser. No auth or public deploy in this stage.
@@ -106,10 +107,12 @@ src/frontend                     Vite + React + TypeScript + Tailwind chat UI
 | `Knowledge/KnowledgeRetrievalResult.cs` | Ranked items (source, heading, semantic type, content, scores) |
 | `Questions/QuestionService.cs` | Orchestrates retrieve / prompt / LLM / source URLs |
 | `Questions/IQuestionService.cs` | Ask contract |
-| `Questions/AskQuestionRequest.cs` / `AskQuestionResponse.cs` | API DTOs |
+| `Questions/AskQuestionRequest.cs` / `AskQuestionResponse.cs` | API DTOs (`Locale` is `us` or `nb`) |
+| `Questions/QuestionLocale.cs` | Locale normalize, query-translation flag, answer-language instruction |
 | `Questions/QuestionSource.cs` / `QuestionRelevance.cs` | Evidence payload |
 | `Questions/QuestionItem.cs` / `QuestionItemStatus.cs` / `QuestionDebugInfo.cs` | Extra question types |
-| `Prompts/answer/answer-prompt-v1.md` ? `v6.md` | Prompt history; **runtime is v6** (copied to output) |
+| `Prompts/answer/answer-prompt-v1.md` ? `v7.md` | Prompt history; **runtime is v7** (copied to output) |
+| `Prompts/translate/query-translate-prompt-v1.md` | English retrieval query for `nb` |
 
 ### Infrastructure (`src/backend/Infrastructure`)
 
@@ -130,7 +133,7 @@ Config: `Configuration/AppConfiguration.cs`.
 
 ### Frontend (`src/frontend`)
 
-Vite + React + TypeScript + Tailwind. Chat UI posts `{ question }` to `POST /api/v1/Questions` via a Vite proxy (`/api` ? `http://localhost:5179`). Types live in `src/frontend/client/types.ts`; fetch lives in `src/frontend/client/questions.ts`. Assistant answers are rendered with `react-markdown` (no raw HTML). No CORS on the API. Swagger on `:5179` is unchanged.
+Vite + React + TypeScript + Tailwind. Chat UI posts `{ question, locale }` (`us` | `nb`) to `POST /api/v1/Questions` via a Vite proxy (`/api` ? `http://localhost:5179`). Chrome copy uses `i18next` / `react-i18next`. The header language menu uses `country-flag-icons` (US / NO) plus `sr-only` / `aria-label` names (`English (US)`, `Norsk bokmål`). Locale is stored in `localStorage`. Types live in `src/frontend/client/types.ts`; fetch lives in `src/frontend/client/questions.ts`. Assistant answers are rendered with `react-markdown` (no raw HTML). No CORS on the API. Swagger on `:5179` is unchanged.
 
 ---
 
@@ -179,6 +182,8 @@ GitHub source URLs: `GitHub:Owner`, `Repository`, `Branch`, `ProjectsFolder`. `Q
 
 - Layers: Api host, Application orchestration, Infrastructure I/O. Console tools are not the REST host.
 - API retrieve-25 vs console/docs retrieve-10; both use 5 chunks in the prompt.
+- `locale: nb` adds an extra LLM call before retrieval. Chunks stay English. UI code `us` is not ISO 639 (`en`).
+- Console eval still uses English questions and the English answer-language instruction.
 - Indexer upserts only; wipe the table or Docker volume for a true rebuild after deletes/renames.
 - `EmbeddingService` ignores `appsettings.json` `Embeddings` / `Ollama` sections.
 - `EmbeddingService` reads `OLLAMA_*` from process env at type init. In console tools, call `AppConfiguration.Build()` before `new EmbeddingService()` so `.env` is loaded. The API already loads config first.

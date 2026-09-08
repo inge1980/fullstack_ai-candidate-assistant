@@ -1,6 +1,7 @@
 ﻿using Infrastructure.Embeddings;
 using Infrastructure.Reranking;
 using Application.Knowledge;
+using Application.Questions;
 using Microsoft.Extensions.Configuration;
 using Infrastructure.Configuration;
 
@@ -12,7 +13,7 @@ var promptPath =
         AppContext.BaseDirectory,
         "Prompts",
         "answer",
-        "answer-prompt-v6.md");
+        "answer-prompt-v7.md");
 
 if (!File.Exists(promptPath))
 {
@@ -171,7 +172,10 @@ foreach (var question in questions)
     var prompt =
         answerPromptTemplate
             .Replace("{{question}}", question)
-            .Replace("{{context}}", context);
+            .Replace("{{context}}", context)
+            .Replace(
+                "{{answer_language_instruction}}",
+                QuestionLocale.AnswerLanguageInstruction(QuestionLocale.Us));
 
     Console.WriteLine();
     Console.WriteLine("==============================");

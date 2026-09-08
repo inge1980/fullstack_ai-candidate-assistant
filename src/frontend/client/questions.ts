@@ -16,8 +16,9 @@ export class ApiError extends Error {
 
 export async function askQuestion(
   question: string,
+  locale: AskQuestionRequest["locale"],
 ): Promise<AskQuestionResponse> {
-  const body: AskQuestionRequest = { question };
+  const body: AskQuestionRequest = { question, locale };
 
   const response = await fetch("/api/v1/Questions", {
     method: "POST",

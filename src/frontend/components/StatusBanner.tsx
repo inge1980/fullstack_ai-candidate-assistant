@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 export type ChatStatus = "idle" | "loading" | "error" | "empty";
 
 type StatusBannerProps = {
@@ -11,10 +13,12 @@ export function StatusBanner({
   errorMessage,
   hasMessages,
 }: StatusBannerProps) {
+  const { t } = useTranslation();
+
   if (status === "loading") {
     return (
       <p className="text-sm text-zinc-600" role="status">
-        Generating an answer from retrieved project evidence?
+        {t("status.loading")}
       </p>
     );
   }
@@ -22,18 +26,13 @@ export function StatusBanner({
   if (status === "error") {
     return (
       <p className="text-sm text-red-700" role="alert">
-        {errorMessage ?? "Something went wrong. Try again."}
+        {errorMessage ?? t("status.errorFallback")}
       </p>
     );
   }
 
   if (!hasMessages) {
-    return (
-      <p className="text-sm text-zinc-600">
-        Ask a question about the candidate?s projects, technologies, or
-        decisions. Answers come from the existing API, not from the browser.
-      </p>
-    );
+    return <p className="text-sm text-zinc-600">{t("status.empty")}</p>;
   }
 
   return null;

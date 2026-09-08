@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 type QuestionFormProps = {
   value: string;
   disabled: boolean;
@@ -11,6 +13,8 @@ export function QuestionForm({
   onChange,
   onSubmit,
 }: QuestionFormProps) {
+  const { t } = useTranslation();
+
   return (
     <form
       className="flex gap-2"
@@ -20,7 +24,7 @@ export function QuestionForm({
       }}
     >
       <label className="sr-only" htmlFor="question">
-        Question
+        {t("form.questionLabel")}
       </label>
       <input
         id="question"
@@ -28,7 +32,7 @@ export function QuestionForm({
         type="text"
         name="question"
         autoComplete="off"
-        placeholder="Ask about projects, stack, or experience"
+        placeholder={t("form.placeholder")}
         value={value}
         disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
@@ -38,7 +42,7 @@ export function QuestionForm({
         type="submit"
         disabled={disabled || value.trim().length === 0}
       >
-        Send
+        {t("form.send")}
       </button>
     </form>
   );
