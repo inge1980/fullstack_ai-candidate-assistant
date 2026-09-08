@@ -2,6 +2,7 @@ export const nb = {
   app: {
     subtitle: "Min Indekserte Narrativdatabase",
     askNewQuestion: "Still et nytt spørsmål",
+    askSameQuestion: "Still samme spørsmål igjen",
   },
   form: {
     questionLabel: "Spørsmål",

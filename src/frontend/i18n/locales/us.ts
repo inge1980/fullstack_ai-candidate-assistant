@@ -2,6 +2,7 @@ export const us = {
   app: {
     subtitle: "My Indexed Narrative Database",
     askNewQuestion: "Ask new question",
+    askSameQuestion: "Ask same question again",
   },
   form: {
     questionLabel: "Question",

@@ -17,16 +17,19 @@ export function App() {
 
   const isLoading = status === "loading";
 
-  async function handleSubmit() {
-    const question = draft.trim();
-    if (question.length === 0 || isLoading) {
+  const previousQuestion =
+    messages.find((message) => message.role === "user")?.content ?? "";
+
+  async function ask(question: string) {
+    const trimmed = question.trim();
+    if (trimmed.length === 0 || isLoading) {
       return;
     }
 
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
       role: "user",
-      content: question,
+      content: trimmed,
     };
 
     setMessages([userMessage]);
@@ -35,7 +38,7 @@ export function App() {
     setStatus("loading");
 
     try {
-      const response = await askQuestion(question, locale);
+      const response = await askQuestion(trimmed, locale);
       const assistantMessage: ChatMessage = {
         id: crypto.randomUUID(),
         role: "assistant",
@@ -82,19 +85,30 @@ export function App() {
           disabled={isLoading}
           onChange={setDraft}
           onSubmit={() => {
-            void handleSubmit();
+            void ask(draft);
           }}
         />
       ) : null}
 
       {messages.length > 0 && !isLoading ? (
-        <button
-          className="self-start rounded-md bg-zinc-900 px-4 py-2 text-white"
-          type="button"
-          onClick={handleReset}
-        >
-          {t("app.askNewQuestion")}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            className="rounded-md bg-zinc-900 px-4 py-2 text-white"
+            type="button"
+            onClick={handleReset}
+          >
+            {t("app.askNewQuestion")}
+          </button>
+          <button
+            className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-800"
+            type="button"
+            onClick={() => {
+              void ask(previousQuestion);
+            }}
+          >
+            {t("app.askSameQuestion")}
+          </button>
+        </div>
       ) : null}
     </div>
   );
