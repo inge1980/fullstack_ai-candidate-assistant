@@ -1,7 +1,7 @@
 export const nb = {
   app: {
-    subtitle: "Kunnskapsassistent for kandidater",
-    clear: "Nullstill",
+    subtitle: "Min Indekserte Narrativdatabase",
+    askNewQuestion: "Still et nytt spørsmål",
   },
   form: {
     questionLabel: "Spørsmål",
@@ -9,7 +9,7 @@ export const nb = {
     send: "Send",
   },
   status: {
-    loading: "Genererer et svar fra hentet prosjektdokumentasjon…",
+    loading: "Genererer svar…",
     errorFallback: "Noe gikk galt. Prøv igjen.",
     empty:
       "Still et spørsmål om kandidatens prosjekter, teknologier eller valg. Svarene kommer fra API-et, ikke fra nettleseren.",

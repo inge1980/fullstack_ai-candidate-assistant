@@ -16,11 +16,7 @@ export function StatusBanner({
   const { t } = useTranslation();
 
   if (status === "loading") {
-    return (
-      <p className="text-sm text-zinc-600" role="status">
-        {t("status.loading")}
-      </p>
-    );
+    return null;
   }
 
   if (status === "error") {

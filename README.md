@@ -1,4 +1,4 @@
-# M.I.N.D - My Indexed Knowledge Directory
+# M.I.N.D - My Indexed Narrative Database
 
 M.I.N.D is a personal AI knowledge assistant built to represent a developer's experience, projects, technical decisions, and professional background.
 

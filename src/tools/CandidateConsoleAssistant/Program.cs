@@ -5,7 +5,7 @@ using Application.Questions;
 using Microsoft.Extensions.Configuration;
 using Infrastructure.Configuration;
 
-const int retrievalLimit = 10; // Limit the number of results retrieved from the vector store
+const int retrievalLimit = 25; // Limit the number of results retrieved from the vector store
 const int promptContextLimit = 5;
 
 var promptPath =
@@ -13,7 +13,7 @@ var promptPath =
         AppContext.BaseDirectory,
         "Prompts",
         "answer",
-        "answer-prompt-v7.md");
+        "answer-prompt-v8.md");
 
 if (!File.Exists(promptPath))
 {

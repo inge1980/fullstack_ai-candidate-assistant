@@ -1,7 +1,7 @@
 export const us = {
   app: {
-    subtitle: "Candidate knowledge assistant",
-    clear: "Clear",
+    subtitle: "My Indexed Narrative Database",
+    askNewQuestion: "Ask new question",
   },
   form: {
     questionLabel: "Question",
@@ -9,7 +9,7 @@ export const us = {
     send: "Send",
   },
   status: {
-    loading: "Generating an answer from retrieved project evidence…",
+    loading: "Generating answer…",
     errorFallback: "Something went wrong. Try again.",
     empty:
       "Ask a question about the candidate's projects, technologies, or decisions. Answers come from the existing API, not from the browser.",

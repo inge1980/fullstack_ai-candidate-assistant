@@ -45,7 +45,7 @@ Ingestion:
 
 Query (API):
 
-`POST /api/v1/Questions` (`question`, `locale` `us`|`nb`) -> if `nb`, LLM-translate the question to English (`query-translate-prompt-v1.md`) -> query embed (English) -> pgvector cosine search -> `MetadataEvidenceScorer` -> sort by combined score -> take prompt context -> `answer-prompt-v7.md` (`{{question}}` original text, `{{context}}` English chunks, `{{answer_language_instruction}}`) -> `LlmClientFactory` / `FallbackLlmClient` -> answer in the requested language + GitHub source URLs
+`POST /api/v1/Questions` (`question`, `locale` `us`|`nb`) -> if `nb`, LLM-translate the question to English (`query-translate-prompt-v1.md`) -> query embed (English) -> pgvector cosine search -> `MetadataEvidenceScorer` -> sort by combined score -> take prompt context -> `answer-prompt-v8.md` (`{{question}}` original text, `{{context}}` English chunks, `{{answer_language_instruction}}`) -> `LlmClientFactory` / `FallbackLlmClient` -> answer in the requested language + GitHub source URLs
 
 Eval (console):
 

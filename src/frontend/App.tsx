@@ -29,7 +29,7 @@ export function App() {
       content: question,
     };
 
-    setMessages((current) => [...current, userMessage]);
+    setMessages([userMessage]);
     setDraft("");
     setErrorMessage(null);
     setStatus("loading");
@@ -65,17 +65,7 @@ export function App() {
           <h1 className="text-xl font-semibold text-zinc-900">M.I.N.D</h1>
           <p className="text-sm text-zinc-600">{t("app.subtitle")}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <LanguageMenu />
-          <button
-            className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-800 disabled:cursor-not-allowed disabled:text-zinc-400"
-            type="button"
-            onClick={handleReset}
-            disabled={isLoading || (messages.length === 0 && draft.length === 0)}
-          >
-            {t("app.clear")}
-          </button>
-        </div>
+        <LanguageMenu />
       </header>
 
       <StatusBanner
@@ -84,16 +74,28 @@ export function App() {
         hasMessages={messages.length > 0}
       />
 
-      <MessageList messages={messages} />
+      <MessageList messages={messages} isLoading={isLoading} />
 
-      <QuestionForm
-        value={draft}
-        disabled={isLoading}
-        onChange={setDraft}
-        onSubmit={() => {
-          void handleSubmit();
-        }}
-      />
+      {messages.length === 0 ? (
+        <QuestionForm
+          value={draft}
+          disabled={isLoading}
+          onChange={setDraft}
+          onSubmit={() => {
+            void handleSubmit();
+          }}
+        />
+      ) : null}
+
+      {messages.length > 0 && !isLoading ? (
+        <button
+          className="self-start rounded-md bg-zinc-900 px-4 py-2 text-white"
+          type="button"
+          onClick={handleReset}
+        >
+          {t("app.askNewQuestion")}
+        </button>
+      ) : null}
     </div>
   );
 }
