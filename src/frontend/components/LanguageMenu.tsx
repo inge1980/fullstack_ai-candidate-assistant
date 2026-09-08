@@ -76,11 +76,27 @@ export function LanguageMenu() {
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-label={currentName}
-        className="flex items-center rounded-md border border-zinc-300 p-1.5 text-zinc-800 hover:bg-zinc-100"
+        className="flex items-center gap-1 rounded-md border border-zinc-300 px-1.5 py-1.5 text-zinc-800 hover:bg-zinc-100"
         type="button"
         onClick={() => setOpen((value) => !value)}
       >
-                  <CurrentFlag aria-hidden="true" className="h-5 w-7 rounded-sm" />
+        <CurrentFlag aria-hidden="true" className="h-5 w-7 rounded-sm" />
+        <svg
+          aria-hidden="true"
+          className={`h-3.5 w-3.5 shrink-0 text-zinc-600 transition-transform ${
+            open ? "rotate-180" : ""
+          }`}
+          fill="none"
+          viewBox="0 0 16 16"
+        >
+          <path
+            d="M4 6l4 4 4-4"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="1.5"
+          />
+        </svg>
         <span className="sr-only">{currentName}</span>
       </button>
       {open ? (
