@@ -2,6 +2,7 @@ import type {
   AskQuestionRequest,
   AskQuestionResponse,
   ProblemDetails,
+  QuestionIntent,
 } from "./types";
 
 export class ApiError extends Error {
@@ -38,6 +39,27 @@ export async function askQuestion(
   }
 
   return (await response.json()) as AskQuestionResponse;
+}
+
+export async function previewQuestionIntent(
+  question: string,
+): Promise<QuestionIntent> {
+  const body: Pick<AskQuestionRequest, "question"> = { question };
+
+  const response = await fetch("/api/v1/Questions/intent", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw new ApiError(await readErrorMessage(response), response.status);
+  }
+
+  return (await response.json()) as QuestionIntent;
 }
 
 async function readErrorMessage(response: Response): Promise<string> {

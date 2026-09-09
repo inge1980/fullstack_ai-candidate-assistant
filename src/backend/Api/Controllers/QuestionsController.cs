@@ -37,4 +37,26 @@ public class QuestionsController(IQuestionService service) : ControllerBase
 
         return Ok(response);
     }
+
+    /// <summary>
+    /// Classify question intent with keyword rules. No retrieval or LLM.
+    /// </summary>
+    [HttpPost("intent")]
+    [ProducesResponseType(typeof(QuestionIntent), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public ActionResult<QuestionIntent> DetectIntent(
+        [FromBody] AskQuestionRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Question))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Validation error",
+                Detail = "Question is required.",
+                Status = StatusCodes.Status400BadRequest
+            });
+        }
+
+        return Ok(QuestionIntentDetector.Detect(request.Question));
+    }
 }

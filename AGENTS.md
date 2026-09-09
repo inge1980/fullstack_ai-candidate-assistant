@@ -90,7 +90,7 @@ src/frontend                     Vite + React + TypeScript + Tailwind chat UI
 | File | Role |
 |---|---|
 | `Program.cs` | DI, Swagger, controllers, static files, 404 fallback |
-| `Controllers/QuestionsController.cs` | `POST /api/v1/Questions` (`includeDebug` adds scores and raw source) |
+| `Controllers/QuestionsController.cs` | `POST /api/v1/Questions` (`includeDebug` adds scores and raw source). `POST /api/v1/Questions/intent` is keyword intent only (no LLM). |
 | `Controllers/LlmController.cs` | `GET /api/v1/llm/test` |
 | `Properties/launchSettings.json` | http `5179`, https `7277` |
 | `wwwroot/404.html` | Fallback page |
@@ -105,9 +105,10 @@ src/frontend                     Vite + React + TypeScript + Tailwind chat UI
 | `Knowledge/KnowledgeRetrievalService.cs` | Query embed -> vector search -> score -> rank |
 | `Knowledge/IKnowledgeRetrievalService.cs` | Retrieval contract |
 | `Knowledge/KnowledgeRetrievalResult.cs` | Ranked items (source, heading, semantic type, content, scores) |
-| `Questions/QuestionService.cs` | Orchestrates retrieve / prompt / LLM / source URLs |
+| `Questions/QuestionService.cs` | Orchestrates retrieve / prompt / LLM / source URLs. Rule-based `QuestionIntentDetector` runs on the original question (no extra LLM); retrieval is unchanged. |
+| `Questions/QuestionIntentDetector.cs` | Keyword intent: `detail`, `list`, `count`, `filter-list`, plus optional `requestedCount` |
 | `Questions/IQuestionService.cs` | Ask contract |
-| `Questions/AskQuestionRequest.cs` / `AskQuestionResponse.cs` | API DTOs (`Locale` is `us` or `nb`) |
+| `Questions/AskQuestionRequest.cs` / `AskQuestionResponse.cs` | API DTOs (`Locale` is `us` or `nb`; response includes `intent`) |
 | `Questions/QuestionLocale.cs` | Locale normalize, query-translation flag, answer-language instruction |
 | `Questions/QuestionSource.cs` / `QuestionRelevance.cs` | Evidence payload |
 | `Questions/QuestionItem.cs` / `QuestionItemStatus.cs` / `QuestionDebugInfo.cs` | Extra question types |
@@ -133,7 +134,7 @@ Config: `Configuration/AppConfiguration.cs`.
 
 ### Frontend (`src/frontend`)
 
-Vite + React + TypeScript + Tailwind. Chat UI posts `{ question, locale }` (`us` | `nb`) to `POST /api/v1/Questions` via a Vite proxy (`/api` ? `http://localhost:5179`). Chrome copy uses `i18next` / `react-i18next`. The header language menu uses `country-flag-icons` (US / NO) plus `sr-only` / `aria-label` names (`English (US)`, `Norsk bokmål`). Locale is stored in `localStorage`. Types live in `src/frontend/client/types.ts`; fetch lives in `src/frontend/client/questions.ts`. Assistant answers are rendered with `react-markdown` (no raw HTML). No CORS on the API. Swagger on `:5179` is unchanged.
+Vite + React + TypeScript + Tailwind. Chat UI posts `{ question, locale }` (`us` | `nb`) to `POST /api/v1/Questions` via a Vite proxy (`/api` ? `http://localhost:5179`). While typing, the form previews intent via `POST /api/v1/Questions/intent` (same keyword detector, no LLM). Chrome copy uses `i18next` / `react-i18next`. The header language menu uses `country-flag-icons` (US / NO) plus `sr-only` / `aria-label` names (`English (US)`, `Norsk bokmål`). Locale is stored in `localStorage`. Types live in `src/frontend/client/types.ts`; fetch lives in `src/frontend/client/questions.ts`. Assistant answers are rendered with `react-markdown` (no raw HTML). No CORS on the API. Swagger on `:5179` is unchanged.
 
 ---
 

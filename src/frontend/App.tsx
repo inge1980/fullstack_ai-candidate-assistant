@@ -1,7 +1,8 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { askQuestion } from "./client/questions";
-import { QuestionForm } from "./components/QuestionForm";
+import { askQuestion, previewQuestionIntent } from "./client/questions";
+import type { QuestionIntent } from "./client/types";
+import { formatIntentDebug, QuestionForm } from "./components/QuestionForm";
 import { MessageList, type ChatMessage } from "./components/MessageList";
 import { StatusBanner, type ChatStatus } from "./components/StatusBanner";
 import { LanguageMenu } from "./components/LanguageMenu";
@@ -15,7 +16,9 @@ export function App() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editDraft, setEditDraft] = useState("");
+  const [intent, setIntent] = useState<QuestionIntent | null>(null);
   const askGenerationRef = useRef(0);
+  const intentPreviewRef = useRef(0);
   const locale = resolveAppLocale(i18n.resolvedLanguage ?? i18n.language);
 
   const isLoading = status === "loading";
@@ -29,6 +32,37 @@ export function App() {
 
   const previousQuestion =
     messages.find((message) => message.role === "user")?.content ?? "";
+
+  useEffect(() => {
+    if (messages.length > 0 || isLoading) {
+      return;
+    }
+
+    const trimmed = draft.trim();
+    if (trimmed.length === 0) {
+      setIntent(null);
+      return;
+    }
+
+    const previewId = ++intentPreviewRef.current;
+    const handle = window.setTimeout(() => {
+      void previewQuestionIntent(trimmed)
+        .then((result) => {
+          if (previewId === intentPreviewRef.current) {
+            setIntent(result);
+          }
+        })
+        .catch(() => {
+          if (previewId === intentPreviewRef.current) {
+            setIntent(null);
+          }
+        });
+    }, 300);
+
+    return () => {
+      window.clearTimeout(handle);
+    };
+  }, [draft, isLoading, messages.length]);
 
   async function ask(question: string) {
     const trimmed = question.trim();
@@ -64,6 +98,7 @@ export function App() {
         prompt: response.prompt ?? undefined,
       };
       setMessages((current) => [...current, assistantMessage]);
+      setIntent(response.intent ?? null);
       setStatus("idle");
     } catch (error) {
       if (generation !== askGenerationRef.current) {
@@ -84,6 +119,8 @@ export function App() {
     setIsEditing(false);
     setMessages([]);
     setErrorMessage(null);
+    setIntent(null);
+    intentPreviewRef.current += 1;
     setStatus("empty");
   }
 
@@ -126,12 +163,17 @@ export function App() {
         <QuestionForm
           value={draft}
           disabled={isLoading}
+          intent={intent}
           onChange={setDraft}
           onSubmit={() => {
             void ask(draft);
           }}
         />
-      ) : null}
+      ) : (
+        <p className="text-xs text-muted" aria-live="polite">
+          {formatIntentDebug(intent)}
+        </p>
+      )}
 
       {messages.length > 0 && !isLoading ? (
         <div className="flex flex-wrap gap-2">

@@ -33,6 +33,10 @@ public sealed class QuestionService(
 
         locale = QuestionLocale.Normalize(locale);
 
+        var intent = QuestionIntentDetector.Detect(question);
+        Console.WriteLine(
+            $"[Intent] {intent.Category} n={intent.RequestedCount?.ToString() ?? "-"}");
+
         var client = llmClientFactory.Create();
 
         var retrievalQuery = question;
@@ -183,7 +187,8 @@ public sealed class QuestionService(
         return new AskQuestionResponse(
             Answer: answer,
             Sources: sources,
-            Prompt: includeDebug ? prompt : null);
+            Prompt: includeDebug ? prompt : null,
+            Intent: intent);
     }
 
     private static async Task<string> LoadAnswerPromptAsync(

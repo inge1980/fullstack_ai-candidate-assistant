@@ -24,11 +24,18 @@ export type QuestionSource = {
   relevance: QuestionRelevance | null;
 };
 
+/** Mirrors Application.Questions.QuestionIntent */
+export type QuestionIntent = {
+  category: string;
+  requestedCount: number | null;
+};
+
 /** Mirrors Application.Questions.AskQuestionResponse */
 export type AskQuestionResponse = {
   answer: string;
   sources: QuestionSource[];
   prompt?: string | null;
+  intent?: QuestionIntent | null;
 };
 
 /** ASP.NET Core ProblemDetails (400 validation) */
