@@ -64,6 +64,7 @@ Intended retrieval (knowledge doc + console): top **10** from the store, top **5
 - LLM providers are replaceable. Fallback order is `Llm.Providers[]` then each provider's `Models[]`.
 - Secrets stay in env (`Google__ApiKey`, `Groq__ApiKey`, `OpenRouter__ApiKey`). Non-secret provider/model lists live in `appsettings.json`.
 - Frontend is a Vite client of the API only. No RAG, embeddings, or LLM calls in the browser. No auth or public deploy in this stage.
+- Frontend visual QA is manual for now: do not screenshot or browser-click to confirm layout; the user inspects the UI.
 
 ---
 
@@ -189,6 +190,7 @@ GitHub source URLs: `GitHub:Owner`, `Repository`, `Branch`, `ProjectsFolder`. `Q
 - `EmbeddingService` ignores `appsettings.json` `Embeddings` / `Ollama` sections.
 - `EmbeddingService` reads `OLLAMA_*` from process env at type init. In console tools, call `AppConfiguration.Build()` before `new EmbeddingService()` so `.env` is loaded. The API already loads config first.
 - No automated tests, no retrieval eval dataset, no frontmatter schema validation.
+- Frontend visual QA is manual; agents should not use the browser to confirm placement or styling unless asked or a runtime failure cannot be diagnosed from code or logs.
 - Out of scope: auth, production deploy, candidate-to-job matching product, hybrid search.
 
 When changing RAG behavior, update this file and, if the product story changed, `knowledge/projects/ai-candidate-assistant-rag.md` (then re-index).

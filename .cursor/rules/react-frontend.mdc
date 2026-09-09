@@ -1,5 +1,5 @@
 ---
-description: React + Vite + Tailwind frontend; API client separate from UI
+description: React + Vite + Tailwind frontend; API client separate from UI; manual visual QA
 globs: src/frontend/**
 alwaysApply: false
 ---
@@ -13,6 +13,18 @@ Keep the frontend simple, production-oriented, and visually restrained. Prefer s
 Use the current Tailwind CSS setup for Vite. Do not introduce legacy Tailwind configuration unless required by the installed version.
 
 Do not modify backend code unless the frontend cannot work without it. Do not add a state-management library, UI component library, or other dependency unless explicitly requested or there is a clear need; explain why if you add one.
+
+## Visual QA (manual)
+
+This repo supersedes generic ?verify UI in the browser? instructions.
+
+Definition of done for frontend: reuse existing components and Tailwind patterns; TypeScript (and lint/build when already cheap) is enough unless the user asks otherwise.
+
+Do not open the browser, take screenshots, or click through to confirm buttons, spacing, or placement. Do not iterate CSS by screenshot.
+
+Use the browser only when the user explicitly asks, or when a runtime failure cannot be diagnosed from code, network logs, or the terminal (app will not start, API proxy 500, obvious JS exception).
+
+In the reply, say what you did not visually verify.
 
 ```text
 # BAD  fetch('/api/v1/Questions') inside a presentational component
