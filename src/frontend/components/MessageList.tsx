@@ -92,8 +92,7 @@ function UserQuestion({
     }
 
     field.focus();
-    const length = field.value.length;
-    field.setSelectionRange(length, length);
+    field.select();
   }, [isEditing]);
 
   return (
