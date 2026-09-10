@@ -45,13 +45,13 @@ Ingestion:
 
 Query (API):
 
-`POST /api/v1/Questions` (`question`, `locale` `us`|`nb`) -> if `nb`, LLM-translate the question to English (`query-translate-prompt-v1.md`) -> query embed (English) -> pgvector cosine search -> `MetadataEvidenceScorer` -> sort by combined score -> take prompt context -> `answer-prompt-v8.md` (`{{question}}` original text, `{{context}}` English chunks, `{{answer_language_instruction}}`) -> `LlmClientFactory` / `FallbackLlmClient` -> answer in the requested language + GitHub source URLs
+`POST /api/v1/Questions` (`question`, `locale` `us`|`nb`) -> if `nb`, LLM-translate the question to English (`query-translate-prompt-v1.md`) -> query embed (English) -> pgvector cosine search -> `MetadataEvidenceScorer` -> sort by combined score -> select prompt context (`filter-list` with N: one chunk per project, up to N) -> `answer-prompt-v8.md` (`{{question}}` original text, `{{context}}` English chunks, `{{answer_language_instruction}}`) -> `LlmClientFactory` / `FallbackLlmClient` -> answer in the requested language + GitHub source URLs
 
 Eval (console):
 
 question -> same retrieval service -> print scores, sections, semantic types, content -> build and print the answer prompt (no required LLM call for inspection)
 
-Intended retrieval (knowledge doc + console): top **10** from the store, top **5** as LLM context. API currently retrieves **25** then takes **5** for the prompt (`QuestionService`). Similarity scores are for ranking only, not probabilities or a cutoff (manual tests often land around 0.58?0.82).
+Intended retrieval (knowledge doc + console): top **10** from the store, top **5** as LLM context. API default is retrieve **25** then **10** chunks. For `filter-list` with a requested N, retrieve `max(50, n*8)` (cap 100), keep one chunk per project (prefer `overview`), take up to N. Similarity scores are for ranking only, not probabilities or a cutoff (manual tests often land around 0.58?0.82).
 
 ---
 
@@ -106,8 +106,9 @@ src/frontend                     Vite + React + TypeScript + Tailwind chat UI
 | `Knowledge/KnowledgeRetrievalService.cs` | Query embed -> vector search -> score -> rank |
 | `Knowledge/IKnowledgeRetrievalService.cs` | Retrieval contract |
 | `Knowledge/KnowledgeRetrievalResult.cs` | Ranked items (source, heading, semantic type, content, scores) |
-| `Questions/QuestionService.cs` | Orchestrates retrieve / prompt / LLM / source URLs. Rule-based `QuestionIntentDetector` runs on the original question (no extra LLM); retrieval is unchanged. |
+| `Questions/QuestionService.cs` | Orchestrates retrieve / prompt / LLM / source URLs. Rule-based `QuestionIntentDetector` runs on the original question. `filter-list` with N uses a wider retrieve window and one chunk per project. |
 | `Questions/QuestionIntentDetector.cs` | Keyword intent: `detail`, `list`, `count`, `filter-list`, plus optional `requestedCount` |
+| `Questions/PromptContextSelector.cs` | Default top-10 chunks; `filter-list`+N: retrieve `max(50, n*8)` cap 100, one overview (else best) chunk per `source`, take N |
 | `Questions/IQuestionService.cs` | Ask contract |
 | `Questions/AskQuestionRequest.cs` / `AskQuestionResponse.cs` | API DTOs (`Locale` is `us` or `nb`; response includes `intent`) |
 | `Questions/QuestionLocale.cs` | Locale normalize, query-translation flag, answer-language instruction |
@@ -183,7 +184,7 @@ GitHub source URLs: `GitHub:Owner`, `Repository`, `Branch`, `ProjectsFolder`. `Q
 ## Pitfalls and gaps
 
 - Layers: Api host, Application orchestration, Infrastructure I/O. Console tools are not the REST host.
-- API retrieve-25 vs console/docs retrieve-10; both use 5 chunks in the prompt.
+- API default retrieve-25 / prompt-10 vs console retrieve-10. `filter-list` with N diversifies by `source` and does not yet filter on period or technologies.
 - `locale: nb` adds an extra LLM call before retrieval. Chunks stay English. UI code `us` is not ISO 639 (`en`).
 - Console eval still uses English questions and the English answer-language instruction.
 - Indexer upserts only; wipe the table or Docker volume for a true rebuild after deletes/renames.

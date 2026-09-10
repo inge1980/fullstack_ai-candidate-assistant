@@ -12,9 +12,6 @@ public sealed class QuestionService(
     IConfiguration configuration)
     : IQuestionService
 {
-    private const int RetrievalLimit = 25;
-    private const int PromptContextLimit = 10;
-    
     private readonly IConfiguration _configuration = configuration;
 
     public async Task<AskQuestionResponse> AskAsync(
@@ -61,14 +58,18 @@ public sealed class QuestionService(
 
         var retrievalStopwatch = Stopwatch.StartNew();
 
+        var retrievalLimit =
+            PromptContextSelector.RetrievalLimit(intent);
+
         var retrieval =
             await knowledgeRetrievalService.RetrieveAsync(
                 query: retrievalQuery,
-                retrievalLimit: RetrievalLimit,
+                retrievalLimit: retrievalLimit,
                 cancellationToken: cancellationToken);
 
         retrievalStopwatch.Stop();
         Console.WriteLine($"[Timing] Retrieval: {retrievalStopwatch.ElapsedMilliseconds} ms");
+        Console.WriteLine($"[Retrieval] limit={retrievalLimit} hits={retrieval.Items.Count}");
 
         // --------------------------------------------------------
         // 2. Select the context that will be sent to the LLM
@@ -77,12 +78,14 @@ public sealed class QuestionService(
         var contextSelectionStopwatch = Stopwatch.StartNew();
 
         var promptResults =
-            retrieval.Items
-                .Take(PromptContextLimit)
-                .ToList();
+            PromptContextSelector.Select(
+                intent,
+                retrieval.Items);
 
         contextSelectionStopwatch.Stop();
         Console.WriteLine($"[Timing] Context selection: {contextSelectionStopwatch.ElapsedMilliseconds} ms");
+        Console.WriteLine(
+            $"[Context] uniqueSources={retrieval.Items.Select(item => item.Source).Distinct(StringComparer.OrdinalIgnoreCase).Count()} selected={promptResults.Count} projects={string.Join(", ", promptResults.Select(item => GetProjectId(item.Source)))}");
 
         // --------------------------------------------------------
         // 3. Build the context for the answer prompt
