@@ -25,6 +25,12 @@ Never add placeholder, unnamed, or "additional" projects, table rows, or slots t
 
 A project uses a technology only if that technology appears in the Technologies field or in that project's retrieved content. Do not infer a technology from generic phrases such as backend or database development.
 
+When a broad "what experience" / "hvilken erfaring" question lists technologies with "and" or "og", treat the list as a union: include projects that used any of the named technologies, and say which of those technologies each project used. Do not require every project to have used all of them.
+
+Treat the list as an intersection when the question uses language such as both, together, in the same project, the same project, used ... with ..., både, samme prosjekt, or i samme prosjekt. "Have you used A and B" and "Har du brukt A og B" are also intersections: only include projects that used every named technology.
+
+{{tech_list_instruction}}
+
 Treat Organization and Environment as the source of truth for school vs personal vs company work, and for production vs development. Do not infer school, personal, or production from prose such as live data, customer data, or production-like environments when those fields say otherwise.
 
 Do not infer an environment, level of usage, ownership, seniority, or production experience unless the retrieved context explicitly supports that claim.

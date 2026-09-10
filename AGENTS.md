@@ -45,7 +45,7 @@ Ingestion:
 
 Query (API):
 
-`POST /api/v1/Questions` (`question`, `locale` `us`|`nb`) -> if `nb`, LLM-translate the question to English (`query-translate-prompt-v1.md`) -> query embed (English) -> pgvector cosine search -> `MetadataEvidenceScorer` -> sort by combined score -> select prompt context (`list`/`filter-list` with N: one chunk per project, up to N; `filter-list`/`count` without N: one chunk per distinct `source` in the retrieve window; broad experience: one chunk per `source` unless a retrieved project is named; broad production questions keep only `environment: production`) -> `answer-prompt-v8.md` (`{{question}}` original text, `{{context}}` English chunks with Organization/Environment/Technologies, `{{answer_language_instruction}}`) -> `LlmClientFactory` / `FallbackLlmClient` -> answer in the requested language + GitHub source URLs
+`POST /api/v1/Questions` (`question`, `locale` `us`|`nb`) -> if `nb`, LLM-translate the question to English (`query-translate-prompt-v1.md`) -> query embed (English) -> pgvector cosine search -> `MetadataEvidenceScorer` -> sort by combined score -> select prompt context (`list`/`filter-list` with N: one chunk per project, up to N; `filter-list`/`count` without N: one chunk per distinct `source` in the retrieve window; broad experience: one chunk per `source` unless a retrieved project is named; broad production questions keep only `environment: production`) -> `answer-prompt-v8.md` (`{{question}}` original text, `{{context}}` English chunks with Organization/Environment/Technologies, `{{answer_language_instruction}}`, `{{tech_list_instruction}}` union vs intersection) -> `LlmClientFactory` / `FallbackLlmClient` -> answer in the requested language + GitHub source URLs
 
 Eval (console):
 
@@ -110,7 +110,7 @@ src/frontend                     Vite + React + TypeScript + Tailwind chat UI
 | `Questions/QuestionService.cs` | Orchestrates retrieve / prompt / LLM / source URLs. Rule-based `QuestionIntentDetector` runs on the original question. `list`/`filter-list` with N uses a wider retrieve window; `filter-list`/`count` without N keep the 25-hit window; catalog intents send one chunk per project. |
 | `Questions/QuestionIntentDetector.cs` | Keyword intent: `detail`, `list`, `count`, `filter-list`, plus optional `requestedCount` |
 | `Questions/AnswerPromptFormatter.cs` | Shared LLM context/prompt fill used by API and CandidateConsoleAssistant |
-| `Questions/PromptContextSelector.cs` | Default retrieve 25 / top-10 chunks for focused detail. Broad "have you used / what experience" retrieves 80 (cap 100), then one chunk per `source` (up to 10). `list`/`filter-list`+N: wider retrieve, one chunk per `source`, take N; `filter-list`/`count` without N: one chunk per `source` in the 25-hit window |
+| `Questions/PromptContextSelector.cs` | Default retrieve 25 / top-10 chunks for focused detail. Broad "have you used / what experience" retrieves 80 (cap 100), then one chunk per `source` (up to 10). `list`/`filter-list`+N: wider retrieve, one chunk per `source`, take N; `filter-list`/`count` without N: one chunk per `source` in the 25-hit window. Broad "what experience" + `and`/`og` is a tech union in the answer prompt; `both`/`både`/`have you used A and B` is an intersection |
 | `Questions/IQuestionService.cs` | Ask contract |
 | `Questions/AskQuestionRequest.cs` / `AskQuestionResponse.cs` | API DTOs (`Locale` is `us` or `nb`; response includes `intent`) |
 | `Questions/QuestionLocale.cs` | Locale normalize, query-translation flag, answer-language instruction |

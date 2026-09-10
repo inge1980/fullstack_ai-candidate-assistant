@@ -11,11 +11,27 @@ public static class PromptContextSelector
     public const int FilterListChunksPerProject = 8;
 
     private static readonly Regex BroadExperienceRegex = new(
-        @"\bhave you (?:ever )?(?:used|built|worked|done)\b|\bwhat (?:kind of )?experience\b|\bwhat production experience\b|\bdo you have .{0,40}experience\b|\bhar du (?:brukt|jobbet|erfaring)\b|\bhvilken erfaring\b|\bproduksjonserfaring\b",
+        @"\bhave you (?:ever )?(?:used|built|worked|done)\b|\bwhat (?:kind of )?experiences?\b|\bwhat production experiences?\b|\bdo (?:you|i) have .{0,40}experiences?\b|\bhar du (?:brukt|jobbet|erfaring)\b|\bhvilke? erfaring(?:er)?\b|\bproduksjonserfaring\b",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     private static readonly Regex ProductionExperienceRegex = new(
         @"\bin production\b|\bi produksjon\b|\bproduction experience\b|\bproduksjonserfaring\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    private static readonly Regex WhatExperienceRegex = new(
+        @"\bwhat (?:kind of )?experiences?\b|\bwhat production experiences?\b|\bdo (?:you|i) have .{0,40}experiences?\b|\bhvilke? erfaring(?:er)?\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    private static readonly Regex HaveYouUsedRegex = new(
+        @"\bhave you (?:ever )?(?:used|built|worked|done)\b|\bhar du (?:brukt|jobbet)\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    private static readonly Regex ListedWithAndRegex = new(
+        @"\b(?:and|og)\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    private static readonly Regex IntersectionCueRegex = new(
+        "\\bboth\\b|\\btogether\\b|\\bin the same project\\b|\\bthe same project\\b|\\bsame project\\b|\\bb\\u00e5de\\b|\\bsamme prosjekt\\b|\\bi samme prosjekt\\b|\\bhave you (?:ever )?(?:used|built|worked).{0,80}\\bwith\\b|\\bhar du (?:brukt|jobbet).{0,80}\\bmed\\b",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     public static bool IsFilterList(QuestionIntent intent)
@@ -143,6 +159,49 @@ public static class PromptContextSelector
     {
         return !string.IsNullOrWhiteSpace(question)
             && ProductionExperienceRegex.IsMatch(question);
+    }
+
+    public static bool IsTechIntersectionQuestion(string? question)
+    {
+        if (string.IsNullOrWhiteSpace(question))
+        {
+            return false;
+        }
+
+        if (IntersectionCueRegex.IsMatch(question))
+        {
+            return true;
+        }
+
+        return HaveYouUsedRegex.IsMatch(question)
+            && ListedWithAndRegex.IsMatch(question);
+    }
+
+    public static bool IsTechUnionQuestion(string? question)
+    {
+        if (string.IsNullOrWhiteSpace(question))
+        {
+            return false;
+        }
+
+        return WhatExperienceRegex.IsMatch(question)
+            && ListedWithAndRegex.IsMatch(question)
+            && !IsTechIntersectionQuestion(question);
+    }
+
+    public static string TechListInstruction(string? question)
+    {
+        if (IsTechIntersectionQuestion(question))
+        {
+            return "For this question, the named technologies are an intersection. Only include a project if it used every named technology, according to that project's Technologies field or retrieved content. Do not use a project that has only one of them.";
+        }
+
+        if (IsTechUnionQuestion(question))
+        {
+            return "For this question, the named technologies are a union. Cover experience with each named technology. A project that used only one of them is relevant for that technology. Do not require every project to have used all of them. Say which of the named technologies each included project used.";
+        }
+
+        return string.Empty;
     }
 
     private static bool RefersToARetrievedProject(

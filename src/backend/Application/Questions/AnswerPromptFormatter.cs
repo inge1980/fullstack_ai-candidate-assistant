@@ -33,7 +33,10 @@ public static class AnswerPromptFormatter
             .Replace("{{context}}", context)
             .Replace(
                 "{{answer_language_instruction}}",
-                QuestionLocale.AnswerLanguageInstruction(locale));
+                QuestionLocale.AnswerLanguageInstruction(locale))
+            .Replace(
+                "{{tech_list_instruction}}",
+                PromptContextSelector.TechListInstruction(question));
     }
 
     public static string ProjectId(string source)
