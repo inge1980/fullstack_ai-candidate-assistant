@@ -9,13 +9,25 @@ public static class PromptContextSelector
     public const int FilterListRetrievalCap = 100;
     public const int FilterListChunksPerProject = 8;
 
-    public static bool IsFilterListWithCount(QuestionIntent intent)
+    public static bool IsFilterList(QuestionIntent intent)
     {
         return string.Equals(
-                intent.Category,
-                QuestionIntentDetector.FilterList,
-                StringComparison.OrdinalIgnoreCase)
-            && intent.RequestedCount is > 0;
+            intent.Category,
+            QuestionIntentDetector.FilterList,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IsCount(QuestionIntent intent)
+    {
+        return string.Equals(
+            intent.Category,
+            QuestionIntentDetector.Count,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IsFilterListWithCount(QuestionIntent intent)
+    {
+        return IsFilterList(intent) && intent.RequestedCount is > 0;
     }
 
     public static int RetrievalLimit(QuestionIntent intent)
@@ -36,22 +48,32 @@ public static class PromptContextSelector
         QuestionIntent intent,
         IReadOnlyList<KnowledgeRetrievalItem> items)
     {
-        if (!IsFilterListWithCount(intent))
+        if (IsFilterListWithCount(intent))
         {
-            return items
-                .Take(DefaultPromptContextLimit)
+            return UniqueProjects(items)
+                .Take(intent.RequestedCount!.Value)
                 .ToList();
         }
 
-        var take = intent.RequestedCount!.Value;
+        if (IsFilterList(intent) || IsCount(intent))
+        {
+            return UniqueProjects(items);
+        }
 
+        return items
+            .Take(DefaultPromptContextLimit)
+            .ToList();
+    }
+
+    private static List<KnowledgeRetrievalItem> UniqueProjects(
+        IReadOnlyList<KnowledgeRetrievalItem> items)
+    {
         return items
             .GroupBy(
                 item => item.Source,
                 StringComparer.OrdinalIgnoreCase)
             .Select(SelectProjectRow)
             .OrderByDescending(row => row.ProjectScore)
-            .Take(take)
             .Select(row => row.Item)
             .ToList();
     }
