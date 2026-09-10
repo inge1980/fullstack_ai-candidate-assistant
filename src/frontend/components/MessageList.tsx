@@ -169,7 +169,12 @@ function UserQuestion({
           </div>
         </form>
       ) : (
-        <p className="whitespace-pre-wrap">{content}</p>
+        <p
+          className={canEdit ? "cursor-text whitespace-pre-wrap" : "whitespace-pre-wrap"}
+          onClick={canEdit ? onStartEdit : undefined}
+        >
+          {content}
+        </p>
       )}
     </>
   );
