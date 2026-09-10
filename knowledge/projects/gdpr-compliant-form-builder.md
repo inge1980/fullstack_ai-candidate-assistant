@@ -61,6 +61,9 @@ concepts:
   - cloud-storage
   - performance-optimization
   - memory-optimization
+  - kanban
+  - trello
+  - asana
 
 dependencies:
   - maennchen/zipstream-php
@@ -88,6 +91,8 @@ A major part of the project involved combining dynamic form management, privacy-
 # Context
 
 Moava AS operated an administration system where customers could create and manage dynamic forms and questionnaires.
+
+The team coordinated work on a physical Kanban board with weekly sticky notes. Each Monday we spent about five minutes on what had been done since last time and what was in progress. When a task was finished during the week, we updated the board ourselves and summarized changes the following Monday. Trello and Asana were used for bug tracking and task priority.
 
 The form builder needed to be usable by non-technical administrators while supporting reusable templates, flexible field configuration, inline editing, duplication, and drag-and-drop ordering.
 

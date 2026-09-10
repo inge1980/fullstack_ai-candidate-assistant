@@ -36,6 +36,8 @@ concepts:
   - ecommerce
   - erp
   - maintainability
+  - trello
+  - asana
 
 dependencies:
 
@@ -58,6 +60,8 @@ The work combined backend development, database development, API integration, an
 # Context
 
 The existing ERP system already contained core product and business information, but product data needed to be managed more systematically across the ERP and connected online store.
+
+The team tracked priorities and kept each other updated in Trello and Asana.
 
 Product information could otherwise become difficult to maintain when the same information was used across multiple systems. Inconsistent or duplicated data increases maintenance effort and creates a risk that customers and internal users see outdated or conflicting product information.
 

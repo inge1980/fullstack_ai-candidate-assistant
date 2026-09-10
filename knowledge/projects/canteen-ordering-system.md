@@ -36,6 +36,8 @@ concepts:
   - backend-development
   - api-design
   - data-consistency
+  - trello
+  - asana
 
 dependencies:
 
@@ -56,6 +58,8 @@ The platform supported multiple departments, allowing department managers to man
 # Context
 
 The project was designed for canteens in both workplaces and schools, where food ordering needed to support different organizational structures and user roles.
+
+The team tracked priorities and kept each other updated in Trello and Asana.
 
 The system addressed the need for a single canteen ordering solution that could serve multiple departments while connecting orders to an ERP system for more efficient inventory management.
 

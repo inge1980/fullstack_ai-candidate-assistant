@@ -42,6 +42,9 @@ concepts:
   - technical-debt
   - customer-retention
   - customer-satisfaction
+  - kanban
+  - trello
+  - asana
 
 links:
   github:
@@ -74,6 +77,8 @@ The modernization was introduced through pilot customers and a progressive rollo
 # Context
 
 Moava AS provided a SaaS CMS used by approximately 1,300 schools in Norway.
+
+The team coordinated work on a physical Kanban board with weekly sticky notes. Each Monday we spent about five minutes on what had been done since last time and what was in progress. When a task was finished during the week, we updated the board ourselves and summarized changes the following Monday. Trello and Asana were used for bug tracking and task priority.
 
 Schools had substantial autonomy over their public websites. Teachers and principals could create content and configure pages themselves using reusable CMS modules.
 

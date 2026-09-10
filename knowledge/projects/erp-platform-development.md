@@ -34,6 +34,8 @@ concepts:
   - debugging
   - production-systems
   - server-administration
+  - trello
+  - asana
 
 dependencies:
 
@@ -56,6 +58,8 @@ A key part of the work was replacing direct database communication between the o
 # Context
 
 The solution consisted of an established ERP platform and an online store that were both central to daily business operations.
+
+The team tracked priorities and kept each other updated in Trello and Asana.
 
 The existing online store was tightly coupled to the ERP database through direct database access. This made the storefront dependent on internal database structures and increased the impact of changes between the two systems.
 
