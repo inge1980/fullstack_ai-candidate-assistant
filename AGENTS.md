@@ -136,7 +136,7 @@ Config: `Configuration/AppConfiguration.cs`.
 
 ### Frontend (`src/frontend`)
 
-Vite + React + TypeScript + Tailwind. Chat UI posts `{ question, locale }` (`us` | `nb`) to `POST /api/v1/Questions` via a Vite proxy (`/api` ? `http://localhost:5179`). While typing, the form previews intent via `POST /api/v1/Questions/intent` (same keyword detector, no LLM). Chrome copy uses `i18next` / `react-i18next`. The header language menu uses `country-flag-icons` (US / NO) plus `sr-only` / `aria-label` names (`English (US)`, `Norsk bokmål`). Locale is stored in `localStorage`. Types live in `src/frontend/client/types.ts`; fetch lives in `src/frontend/client/questions.ts`. Assistant answers are rendered with `react-markdown` (no raw HTML). No CORS on the API. Swagger on `:5179` is unchanged.
+Vite + React + TypeScript + Tailwind. Chat UI posts `{ question, locale }` (`us` | `nb`) to `POST /api/v1/Questions` via a Vite proxy (`/api` ? `http://localhost:5179`). While typing, the form previews intent via `POST /api/v1/Questions/intent` (same keyword detector, no LLM). Chrome copy uses `i18next` / `react-i18next`. The header language menu uses `country-flag-icons` (US / NO) plus `sr-only` / `aria-label` names (`English (US)`, `Norsk bokmål`). Locale is stored in `localStorage`. Types live in `src/frontend/client/types.ts`; fetch lives in `src/frontend/client/questions.ts`. Assistant answers are rendered with `react-markdown` plus `remark-gfm` (tables, strikethrough, thematic breaks; no raw HTML). Flattened one-line GFM tables are split into rows before parse. No CORS on the API. Swagger on `:5179` is unchanged.
 
 ---
 

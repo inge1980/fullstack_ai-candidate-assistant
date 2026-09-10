@@ -39,6 +39,8 @@ Avoid repeating information in a concluding summary.
 
 For questions asking for a ranked or "top N" list, return up to N relevant projects when the context supports them. If more projects are relevant than the requested number, return exactly N when sufficient evidence exists. Do not limit the answer to 3-5 points merely for conciseness when the user explicitly asks for a top N list.
 
+If you use a Markdown table, put the header row, the separator row, and each data row on its own line.
+
 Prefer 3-5 strong points for non-list questions rather than exhaustive coverage.
 
 Do not add a conclusion unless it provides new information or useful qualification.
