@@ -78,40 +78,34 @@ var questions = new[]
 
     // PostgreSQL-related questions to evaluate retrieval and ranking
     "Have you built systems involving PostgreSQL?",     //  Multiple projects 
-    //"What experience do I have with PostgreSQL?",       // Broad knowledge and specific examples
+    //"What experience do you have with PostgreSQL?",       // Broad knowledge and specific examples
     //"Have you used pgvector?",                          // RAG-prosject ranked as nr 1, but also other projects
     //"Have you used PostgreSQL with .NET?",              // Lost & Found high ranked
-    //"What databases have I worked with?",               // PostgreSQL + others
-    //"Have you used PostgreSQL in production?"           // Should avoid school projects and focus on real-world experience
+    //"What databases have you worked with?",               // PostgreSQL + others
 
-/* 
-// Initial test questions for retrieval evaluation
+    // Initial test questions for retrieval evaluation
     // Broad technology experience
-    "What experience do I have with ASP.NET Core?",
+    //"What experience do I have with ASP.NET Core?",
 
     // Specific implementation detail
-    "How did you authenticate your Azure deployment?",
+    //"How did you authenticate your Azure deployment?",
 
     // Known ranking problem
-    "Have you worked with CI/CD?",
-
-    // Potential false positive / noisy retrieval
-    "Have you built systems involving PostgreSQL?",
+    //"Have you worked with CI/CD?",
 
     // Broader domain experience
-    "What experience do I have with ERP systems?" //,
- */
+    //"What experience do I have with ERP systems?" //,
 
     // Other specific technologies
-    /* "What experience do I have with .NET and PostgreSQL?",
-    "What projects involved React and TypeScript?",
-    "What experience do I have with GDPR and form builders?",
-    "Have you worked with Docker?",
-    "What Azure experience do you have?",
-    "Have you worked with Terraform?",
-    "What experience do I have with Terraform?",
-    "What projects demonstrate backend development?",
-    "Have you worked with APIs and integrations?" */
+    //"What experience do I have with .NET and PostgreSQL?",
+    //"What projects involved React and TypeScript?",
+    //"What experience do I have with GDPR and form builders?",
+    //"Have you worked with Docker?",
+    //"What Azure experience do you have?",
+    //"Have you worked with Terraform?",
+    //"What experience do I have with Terraform?",
+    //"What projects demonstrate backend development?",
+    //"Have you worked with APIs and integrations?"
 };
 
 Console.WriteLine();
