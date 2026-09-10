@@ -51,7 +51,7 @@ Eval (console):
 
 question -> same intent, retrieval limit, and `PromptContextSelector` as the API -> print all ranked hits -> `AnswerPromptFormatter` fills `answer-prompt-v8.md` (no required LLM call). English locale only (no `nb` query translation).
 
-Intended retrieval (knowledge doc + console): top **10** from the store, top **5** as LLM context. API default is retrieve **25** then **10** chunks. For `list` or `filter-list` with a requested N, retrieve `max(50, n*8)` (cap 100), one chunk per project (prefer `overview`), take up to N. For `filter-list` or `count` without N, retrieve 25 and send one chunk per distinct `source` in that window. Similarity scores are for ranking only, not probabilities or a cutoff (manual tests often land around 0.58?0.82).
+Intended retrieval (knowledge doc + console): top **10** from the store, top **5** as LLM context. API default is retrieve **25** then **10** chunks. For `list` or `filter-list` with a requested N, retrieve `max(50, n*8)` (cap 100), one chunk per project (prefer `overview`), take up to N. For `filter-list` or `count` without N, retrieve 25 and send one chunk per distinct `source` in that window. Broad experience questions (`have you used`, `what experience`) retrieve `max(50, 10*8)` (cap 100), then send one chunk per `source` (up to 10) unless the question names a retrieved project, in which case the default 10 chunks are kept. Similarity scores are for ranking only, not probabilities or a cutoff (manual tests often land around 0.58?0.82).
 
 ---
 
@@ -109,7 +109,7 @@ src/frontend                     Vite + React + TypeScript + Tailwind chat UI
 | `Questions/QuestionService.cs` | Orchestrates retrieve / prompt / LLM / source URLs. Rule-based `QuestionIntentDetector` runs on the original question. `list`/`filter-list` with N uses a wider retrieve window; `filter-list`/`count` without N keep the 25-hit window; catalog intents send one chunk per project. |
 | `Questions/QuestionIntentDetector.cs` | Keyword intent: `detail`, `list`, `count`, `filter-list`, plus optional `requestedCount` |
 | `Questions/AnswerPromptFormatter.cs` | Shared LLM context/prompt fill used by API and CandidateConsoleAssistant |
-| `Questions/PromptContextSelector.cs` | Default top-10 chunks; `list`/`filter-list`+N: wider retrieve, one chunk per `source`, take N; `filter-list`/`count` without N: one chunk per `source` in the 25-hit window |
+| `Questions/PromptContextSelector.cs` | Default retrieve 25 / top-10 chunks for focused detail. Broad "have you used / what experience" retrieves 80 (cap 100), then one chunk per `source` (up to 10). `list`/`filter-list`+N: wider retrieve, one chunk per `source`, take N; `filter-list`/`count` without N: one chunk per `source` in the 25-hit window |
 | `Questions/IQuestionService.cs` | Ask contract |
 | `Questions/AskQuestionRequest.cs` / `AskQuestionResponse.cs` | API DTOs (`Locale` is `us` or `nb`; response includes `intent`) |
 | `Questions/QuestionLocale.cs` | Locale normalize, query-translation flag, answer-language instruction |

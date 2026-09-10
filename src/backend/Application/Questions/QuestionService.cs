@@ -59,7 +59,7 @@ public sealed class QuestionService(
         var retrievalStopwatch = Stopwatch.StartNew();
 
         var retrievalLimit =
-            PromptContextSelector.RetrievalLimit(intent);
+            PromptContextSelector.RetrievalLimit(intent, question);
 
         var retrieval =
             await knowledgeRetrievalService.RetrieveAsync(
@@ -80,7 +80,8 @@ public sealed class QuestionService(
         var promptResults =
             PromptContextSelector.Select(
                 intent,
-                retrieval.Items);
+                retrieval.Items,
+                question);
 
         contextSelectionStopwatch.Stop();
         Console.WriteLine($"[Timing] Context selection: {contextSelectionStopwatch.ElapsedMilliseconds} ms");

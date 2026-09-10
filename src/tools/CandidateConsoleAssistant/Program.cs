@@ -55,7 +55,7 @@ var knowledgeRetrievalService =
 var questions = new[]
 {
     // Test retrieval of projects with PostgreSQL
-    "How many project have you worked on with PostgreSQL, and what where they all about?",
+    //"How many project have you worked on with PostgreSQL, and what where they all about?",
 
     // Test retrieval of projects with specific technologies
     //"Gi meg topp 10 prosjekter du har gjort som inneholder html, css, sql eller javascript.",
@@ -70,7 +70,7 @@ var questions = new[]
     //"Which of my projects demonstrate experience relevant to a Platform Engineer role involving software development, developer experience, internal developer platforms, Kubernetes, IaC, CI/CD, automation, and hybrid on-prem/cloud?"
 
     // Test small variations of the same question to evaluate retrieval and ranking
-    //"Have you used PostgreSQL?",
+    "Have you used PostgreSQL?",
     //"Have you used PostgreSQL in production?",
     //"Have you used PostgreSQL in a school project?",
     //"Have you used PostgreSQL for personal projects?",
@@ -132,7 +132,7 @@ foreach (var question in questions)
         $"[Intent] {intent.Category} n={intent.RequestedCount?.ToString() ?? "-"}");
 
     var retrievalLimit =
-        PromptContextSelector.RetrievalLimit(intent);
+        PromptContextSelector.RetrievalLimit(intent, question);
 
     var retrieval =
         await knowledgeRetrievalService.RetrieveAsync(
@@ -172,7 +172,8 @@ foreach (var question in questions)
     var promptResults =
         PromptContextSelector.Select(
             intent,
-            retrieval.Items);
+            retrieval.Items,
+            question);
 
     Console.WriteLine();
     Console.WriteLine(
