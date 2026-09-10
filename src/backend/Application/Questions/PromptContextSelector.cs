@@ -14,6 +14,10 @@ public static class PromptContextSelector
         @"\bhave you (?:ever )?(?:used|built|worked|done)\b|\bwhat (?:kind of )?experience\b|\bwhat production experience\b|\bdo you have .{0,40}experience\b|\bhar du (?:brukt|jobbet|erfaring)\b|\bhvilken erfaring\b|\bproduksjonserfaring\b",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
+    private static readonly Regex ProductionExperienceRegex = new(
+        @"\bin production\b|\bi produksjon\b|\bproduction experience\b|\bproduksjonserfaring\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
     public static bool IsFilterList(QuestionIntent intent)
     {
         return string.Equals(
@@ -110,7 +114,16 @@ public static class PromptContextSelector
         if (IsBroadExperienceQuestion(question)
             && !RefersToARetrievedProject(question, items))
         {
-            return UniqueProjects(items)
+            var unique = UniqueProjects(items);
+
+            if (IsProductionExperienceQuestion(question))
+            {
+                unique = unique
+                    .Where(AnswerPromptFormatter.IsProductionEnvironment)
+                    .ToList();
+            }
+
+            return unique
                 .Take(DefaultPromptContextLimit)
                 .ToList();
         }
@@ -124,6 +137,12 @@ public static class PromptContextSelector
     {
         return !string.IsNullOrWhiteSpace(question)
             && BroadExperienceRegex.IsMatch(question);
+    }
+
+    public static bool IsProductionExperienceQuestion(string? question)
+    {
+        return !string.IsNullOrWhiteSpace(question)
+            && ProductionExperienceRegex.IsMatch(question);
     }
 
     private static bool RefersToARetrievedProject(

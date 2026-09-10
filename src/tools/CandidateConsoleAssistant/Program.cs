@@ -70,14 +70,14 @@ var questions = new[]
     //"Which of my projects demonstrate experience relevant to a Platform Engineer role involving software development, developer experience, internal developer platforms, Kubernetes, IaC, CI/CD, automation, and hybrid on-prem/cloud?"
 
     // Test small variations of the same question to evaluate retrieval and ranking
-    "Have you used PostgreSQL?",
+    //"Have you used PostgreSQL?",
     //"Have you used PostgreSQL in production?",
     //"Have you used PostgreSQL in a school project?",
     //"Have you used PostgreSQL for personal projects?",
     //"What production experience do I have?"
 
     // PostgreSQL-related questions to evaluate retrieval and ranking
-    //"Have you built systems involving PostgreSQL?",     //  Multiple projects 
+    "Have you built systems involving PostgreSQL?",     //  Multiple projects 
     //"What experience do I have with PostgreSQL?",       // Broad knowledge and specific examples
     //"Have you used pgvector?",                          // RAG-prosject ranked as nr 1, but also other projects
     //"Have you used PostgreSQL with .NET?",              // Lost & Found high ranked

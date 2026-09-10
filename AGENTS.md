@@ -45,13 +45,13 @@ Ingestion:
 
 Query (API):
 
-`POST /api/v1/Questions` (`question`, `locale` `us`|`nb`) -> if `nb`, LLM-translate the question to English (`query-translate-prompt-v1.md`) -> query embed (English) -> pgvector cosine search -> `MetadataEvidenceScorer` -> sort by combined score -> select prompt context (`list`/`filter-list` with N: one chunk per project, up to N; `filter-list`/`count` without N: one chunk per distinct `source` in the retrieve window) -> `answer-prompt-v8.md` (`{{question}}` original text, `{{context}}` English chunks, `{{answer_language_instruction}}`) -> `LlmClientFactory` / `FallbackLlmClient` -> answer in the requested language + GitHub source URLs
+`POST /api/v1/Questions` (`question`, `locale` `us`|`nb`) -> if `nb`, LLM-translate the question to English (`query-translate-prompt-v1.md`) -> query embed (English) -> pgvector cosine search -> `MetadataEvidenceScorer` -> sort by combined score -> select prompt context (`list`/`filter-list` with N: one chunk per project, up to N; `filter-list`/`count` without N: one chunk per distinct `source` in the retrieve window; broad experience: one chunk per `source` unless a retrieved project is named; broad production questions keep only `environment: production`) -> `answer-prompt-v8.md` (`{{question}}` original text, `{{context}}` English chunks with Organization/Environment/Technologies, `{{answer_language_instruction}}`) -> `LlmClientFactory` / `FallbackLlmClient` -> answer in the requested language + GitHub source URLs
 
 Eval (console):
 
 question -> same intent, retrieval limit, and `PromptContextSelector` as the API -> print all ranked hits -> `AnswerPromptFormatter` fills `answer-prompt-v8.md` (no required LLM call). English locale only (no `nb` query translation).
 
-Intended retrieval (knowledge doc + console): top **10** from the store, top **5** as LLM context. API default is retrieve **25** then **10** chunks. For `list` or `filter-list` with a requested N, retrieve `max(50, n*8)` (cap 100), one chunk per project (prefer `overview`), take up to N. For `filter-list` or `count` without N, retrieve 25 and send one chunk per distinct `source` in that window. Broad experience questions (`have you used`, `what experience`) retrieve `max(50, 10*8)` (cap 100), then send one chunk per `source` (up to 10) unless the question names a retrieved project, in which case the default 10 chunks are kept. Similarity scores are for ranking only, not probabilities or a cutoff (manual tests often land around 0.58?0.82).
+Intended retrieval (knowledge doc + console): top **10** from the store, top **5** as LLM context. API default is retrieve **25** then **10** chunks. For `list` or `filter-list` with a requested N, retrieve `max(50, n*8)` (cap 100), one chunk per project (prefer `overview`), take up to N. For `filter-list` or `count` without N, retrieve 25 and send one chunk per distinct `source` in that window. Broad experience questions (`have you used`, `what experience`) retrieve `max(50, 10*8)` (cap 100), then send one chunk per `source` (up to 10) unless the question names a retrieved project, in which case the default 10 chunks are kept. Broad production questions (`in production`, `production experience`, `i produksjon`, `produksjonserfaring`) then keep only chunks whose frontmatter `environment` is `production`. Similarity scores are for ranking only, not probabilities or a cutoff (manual tests often land around 0.58?0.82).
 
 ---
 
@@ -59,6 +59,7 @@ Intended retrieval (knowledge doc + console): top **10** from the store, top **5
 
 - Same embedding model for documents and queries. Changing the model or dimensions requires a full re-index.
 - Frontmatter `technologies` is the declared stack, not every technology mentioned in prose.
+- Frontmatter `organization` and `environment` decide school/personal/company and production vs development. Prose such as live data does not override those fields.
 - Answer prompt must refuse unsupported claims (invented tech, responsibilities, projects, production use).
 - Knowledge, embeddings, retrieval, and the answer-prompt template stay English. `locale: nb` translates the user question to English before embedding and asks the LLM for fluent Norwegian Bokmål, not a literal translation. `locale: us` skips translation and answers in American English.
 - LLM providers are replaceable. Fallback order is `Llm.Providers[]` then each provider's `Models[]`.
@@ -185,7 +186,7 @@ GitHub source URLs: `GitHub:Owner`, `Repository`, `Branch`, `ProjectsFolder`. `Q
 ## Pitfalls and gaps
 
 - Layers: Api host, Application orchestration, Infrastructure I/O. Console tools are not the REST host.
-- API default retrieve-25 / prompt-10. `list`/`filter-list` with N and `filter-list`/`count` without N diversify by `source` and do not yet filter on period or technologies.
+- API default retrieve-25 / prompt-10. `list`/`filter-list` with N and `filter-list`/`count` without N diversify by `source`. Broad production questions filter on `environment`. They do not yet filter on period or `technologies`.
 - `locale: nb` adds an extra LLM call before retrieval. Chunks stay English. UI code `us` is not ISO 639 (`en`).
 - Console eval still uses English questions and the English answer-language instruction.
 - Indexer upserts only; wipe the table or Docker volume for a true rebuild after deletes/renames.

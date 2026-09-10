@@ -1,7 +1,7 @@
 ---
 title: AI Candidate Assistant with RAG Knowledge Base
 
-organization: Personal Project
+organization: School Project
 
 role: Backend Developer
 

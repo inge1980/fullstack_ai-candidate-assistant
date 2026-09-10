@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Application.Knowledge;
 
 namespace Application.Questions;
@@ -13,6 +14,8 @@ public static class AnswerPromptFormatter
                 (result, index) =>
                     $"[{index + 1}] {result.Source}\n" +
                     $"Project: {ProjectTitle(result)}\n" +
+                    $"Organization: {MetadataString(result, "organization")}\n" +
+                    $"Environment: {MetadataString(result, "environment")}\n" +
                     $"Technologies: {ProjectTechnologies(result)}\n" +
                     $"Heading: {result.Heading}\n" +
                     $"Semantic Type: {result.SemanticType}\n" +
@@ -40,16 +43,41 @@ public static class AnswerPromptFormatter
 
     public static string ProjectTitle(KnowledgeRetrievalItem result)
     {
-        if (result.Metadata.TryGetValue(
-                "title",
-                out var title)
-            && title is string titleString
-            && !string.IsNullOrWhiteSpace(titleString))
+        var title = MetadataString(result, "title");
+        return string.IsNullOrWhiteSpace(title)
+            ? ProjectId(result.Source)
+            : title;
+    }
+
+    public static bool IsProductionEnvironment(KnowledgeRetrievalItem result)
+    {
+        return string.Equals(
+            MetadataString(result, "environment").Trim(),
+            "production",
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static string MetadataString(
+        KnowledgeRetrievalItem result,
+        string key)
+    {
+        if (!result.Metadata.TryGetValue(key, out var value)
+            || value is null)
         {
-            return titleString;
+            return string.Empty;
         }
 
-        return ProjectId(result.Source);
+        if (value is JsonElement json)
+        {
+            if (json.ValueKind == JsonValueKind.String)
+            {
+                return json.GetString() ?? string.Empty;
+            }
+
+            return json.ToString();
+        }
+
+        return value.ToString() ?? string.Empty;
     }
 
     public static string ProjectTechnologies(KnowledgeRetrievalItem result)
@@ -62,8 +90,8 @@ public static class AnswerPromptFormatter
             return string.Empty;
         }
 
-        if (value is System.Text.Json.JsonElement json
-            && json.ValueKind == System.Text.Json.JsonValueKind.Array)
+        if (value is JsonElement json
+            && json.ValueKind == JsonValueKind.Array)
         {
             return string.Join(
                 ", ",
