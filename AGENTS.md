@@ -49,7 +49,7 @@ Query (API):
 
 Eval (console):
 
-question -> same retrieval service -> print scores, sections, semantic types, content -> build and print the answer prompt (no required LLM call for inspection)
+question -> same intent, retrieval limit, and `PromptContextSelector` as the API -> print all ranked hits -> `AnswerPromptFormatter` fills `answer-prompt-v8.md` (no required LLM call). English locale only (no `nb` query translation).
 
 Intended retrieval (knowledge doc + console): top **10** from the store, top **5** as LLM context. API default is retrieve **25** then **10** chunks. For `filter-list` with a requested N, retrieve `max(50, n*8)` (cap 100), keep one chunk per project (prefer `overview`), take up to N. Similarity scores are for ranking only, not probabilities or a cutoff (manual tests often land around 0.58?0.82).
 
@@ -108,6 +108,7 @@ src/frontend                     Vite + React + TypeScript + Tailwind chat UI
 | `Knowledge/KnowledgeRetrievalResult.cs` | Ranked items (source, heading, semantic type, content, scores) |
 | `Questions/QuestionService.cs` | Orchestrates retrieve / prompt / LLM / source URLs. Rule-based `QuestionIntentDetector` runs on the original question. `filter-list` with N uses a wider retrieve window and one chunk per project. |
 | `Questions/QuestionIntentDetector.cs` | Keyword intent: `detail`, `list`, `count`, `filter-list`, plus optional `requestedCount` |
+| `Questions/AnswerPromptFormatter.cs` | Shared LLM context/prompt fill used by API and CandidateConsoleAssistant |
 | `Questions/PromptContextSelector.cs` | Default top-10 chunks; `filter-list`+N: retrieve `max(50, n*8)` cap 100, one overview (else best) chunk per `source`, take N |
 | `Questions/IQuestionService.cs` | Ask contract |
 | `Questions/AskQuestionRequest.cs` / `AskQuestionResponse.cs` | API DTOs (`Locale` is `us` or `nb`; response includes `intent`) |
@@ -132,7 +133,7 @@ Config: `Configuration/AppConfiguration.cs`.
 ### Tools
 
 - **KnowledgeIndexer:** load -> chunk -> embed -> `InsertAsync`. Prints document/chunk stats. Does not delete rows for removed or renamed files.
-- **CandidateConsoleAssistant:** hardcoded eval questions; top 10 retrieval, top 5 prompt context; prints timing, combined/vector/metadata/evidence scores, heading, semantic type, content, and the built prompt.
+- **CandidateConsoleAssistant:** hardcoded eval questions; same intent, retrieval limit, context selection, and answer-prompt fill as `QuestionService` (prints all ranked hits, then the prompt the API would send). English locale only.
 
 ### Frontend (`src/frontend`)
 

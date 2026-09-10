@@ -5,9 +5,6 @@ using Application.Questions;
 using Microsoft.Extensions.Configuration;
 using Infrastructure.Configuration;
 
-const int retrievalLimit = 25; // Limit the number of results retrieved from the vector store
-const int promptContextLimit = 10; // Limit the number of results included in the prompt context
-
 var promptPath =
     Path.Combine(
         AppContext.BaseDirectory,
@@ -130,10 +127,19 @@ foreach (var question in questions)
     Console.WriteLine("==============================");
     Console.WriteLine();
 
+    var intent = QuestionIntentDetector.Detect(question);
+    Console.WriteLine(
+        $"[Intent] {intent.Category} n={intent.RequestedCount?.ToString() ?? "-"}");
+
+    var retrievalLimit =
+        PromptContextSelector.RetrievalLimit(intent);
+
     var retrieval =
         await knowledgeRetrievalService.RetrieveAsync(
             query: question,
             retrievalLimit: retrievalLimit);
+
+    Console.WriteLine($"[Retrieval] limit={retrievalLimit} hits={retrieval.Items.Count}");
 
     var rank = 1;
 
@@ -163,25 +169,24 @@ foreach (var question in questions)
         rank++;
     }
 
+    var promptResults =
+        PromptContextSelector.Select(
+            intent,
+            retrieval.Items);
+
+    Console.WriteLine();
+    Console.WriteLine(
+        $"[Context] uniqueSources={retrieval.Items.Select(item => item.Source).Distinct(StringComparer.OrdinalIgnoreCase).Count()} selected={promptResults.Count} projects={string.Join(", ", promptResults.Select(item => AnswerPromptFormatter.ProjectId(item.Source)))}");
+
     var context =
-        string.Join(
-            "\n\n",
-            retrieval.Items
-            .Take(promptContextLimit)
-                .Select(
-                    (result, index) =>
-                        $"[{index + 1}] {result.Source}\n" +
-                        $"Heading: {result.Heading}\n" +
-                        $"Semantic Type: {result.SemanticType}\n" +
-                        $"Content: {result.Content}"));
+        AnswerPromptFormatter.FormatContext(promptResults);
 
     var prompt =
-        answerPromptTemplate
-            .Replace("{{question}}", question)
-            .Replace("{{context}}", context)
-            .Replace(
-                "{{answer_language_instruction}}",
-                QuestionLocale.AnswerLanguageInstruction(QuestionLocale.Us));
+        AnswerPromptFormatter.Fill(
+            answerPromptTemplate,
+            question,
+            context,
+            QuestionLocale.Us);
 
     Console.WriteLine();
     Console.WriteLine("==============================");

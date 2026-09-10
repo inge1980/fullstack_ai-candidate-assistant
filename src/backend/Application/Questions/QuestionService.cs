@@ -85,7 +85,7 @@ public sealed class QuestionService(
         contextSelectionStopwatch.Stop();
         Console.WriteLine($"[Timing] Context selection: {contextSelectionStopwatch.ElapsedMilliseconds} ms");
         Console.WriteLine(
-            $"[Context] uniqueSources={retrieval.Items.Select(item => item.Source).Distinct(StringComparer.OrdinalIgnoreCase).Count()} selected={promptResults.Count} projects={string.Join(", ", promptResults.Select(item => GetProjectId(item.Source)))}");
+            $"[Context] uniqueSources={retrieval.Items.Select(item => item.Source).Distinct(StringComparer.OrdinalIgnoreCase).Count()} selected={promptResults.Count} projects={string.Join(", ", promptResults.Select(item => AnswerPromptFormatter.ProjectId(item.Source)))}");
 
         // --------------------------------------------------------
         // 3. Build the context for the answer prompt
@@ -94,16 +94,7 @@ public sealed class QuestionService(
         var contextBuildStopwatch = Stopwatch.StartNew();
 
         var context =
-            string.Join(
-                "\n\n",
-                promptResults.Select(
-                    (result, index) =>
-                        $"[{index + 1}] {result.Source}\n" +
-                        $"Project: {GetProjectTitle(result)}\n" +
-                        $"Technologies: {GetProjectTechnologies(result)}\n" +
-                        $"Heading: {result.Heading}\n" +
-                        $"Semantic Type: {result.SemanticType}\n" +
-                        $"Content: {result.Content}"));
+            AnswerPromptFormatter.FormatContext(promptResults);
         
         contextBuildStopwatch.Stop();
         Console.WriteLine($"[Timing] Context build: {contextBuildStopwatch.ElapsedMilliseconds} ms");
@@ -128,12 +119,11 @@ public sealed class QuestionService(
         var promptBuildStopwatch = Stopwatch.StartNew();
 
         var prompt =
-            promptTemplate
-                .Replace("{{question}}", question)
-                .Replace("{{context}}", context)
-                .Replace(
-                    "{{answer_language_instruction}}",
-                    QuestionLocale.AnswerLanguageInstruction(locale));
+            AnswerPromptFormatter.Fill(
+                promptTemplate,
+                question,
+                context,
+                locale);
 
         promptBuildStopwatch.Stop();
         Console.WriteLine($"[Timing] Prompt build: {promptBuildStopwatch.ElapsedMilliseconds} ms");
@@ -163,8 +153,8 @@ public sealed class QuestionService(
                 .Select(
                     result =>
                         new QuestionSource(
-                            ProjectId: GetProjectId(result.Source),
-                            Title: GetProjectTitle(result),
+                            ProjectId: AnswerPromptFormatter.ProjectId(result.Source),
+                            Title: AnswerPromptFormatter.ProjectTitle(result),
                             Url: GetProjectUrl(result.Source),
                             Heading: result.Heading,
                             SemanticType: result.SemanticType,
@@ -250,57 +240,12 @@ public sealed class QuestionService(
             : translated;
     }
 
-    private static string GetProjectId(
-        string source)
-    {
-        return Path.GetFileNameWithoutExtension(source);
-    }
-
-    private static string GetProjectTitle(
-        KnowledgeRetrievalItem result)
-    {
-        if (result.Metadata.TryGetValue(
-                "title",
-                out var title)
-            && title is string titleString
-            && !string.IsNullOrWhiteSpace(titleString))
-        {
-            return titleString;
-        }
-
-        return GetProjectId(result.Source);
-    }
-
-    private static string GetProjectTechnologies(
-        KnowledgeRetrievalItem result)
-    {
-        if (!result.Metadata.TryGetValue(
-                "technologies",
-                out var value)
-            || value is null)
-        {
-            return string.Empty;
-        }
-
-        if (value is System.Text.Json.JsonElement json
-            && json.ValueKind == System.Text.Json.JsonValueKind.Array)
-        {
-            return string.Join(
-                ", ",
-                json.EnumerateArray()
-                    .Select(item => item.GetString())
-                    .Where(static text => !string.IsNullOrWhiteSpace(text)));
-        }
-
-        return value.ToString() ?? string.Empty;
-    }
-
     private string GetProjectUrl(
         string source)
     {
         var GithubProjectBaseUrl = "https://github.com/" + _configuration["Github:Owner"] + "/" + _configuration["Github:Repository"] + "/blob/" + _configuration["Github:Branch"] + "/" + _configuration["Github:ProjectsFolder"] + "/";
         var projectId =
-            GetProjectId(source);
+            AnswerPromptFormatter.ProjectId(source);
 
         return $"{GithubProjectBaseUrl}/{projectId}.md";
     }
