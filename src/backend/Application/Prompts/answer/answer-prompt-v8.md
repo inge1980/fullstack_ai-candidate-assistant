@@ -21,6 +21,8 @@ Do not include every retrieved fact merely because it is available.
 
 Do not invent technologies, responsibilities, projects, or experience.
 
+A project uses a technology only if that technology appears in the Technologies field or in that project's retrieved content. Do not infer a technology from generic phrases such as backend or database development.
+
 Do not infer an environment, level of usage, ownership, seniority, or production experience unless the retrieved context explicitly supports that claim.
 
 Distinguish between evidence that a technology was used and evidence that it was used in production.

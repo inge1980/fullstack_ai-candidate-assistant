@@ -100,6 +100,7 @@ public sealed class QuestionService(
                     (result, index) =>
                         $"[{index + 1}] {result.Source}\n" +
                         $"Project: {GetProjectTitle(result)}\n" +
+                        $"Technologies: {GetProjectTechnologies(result)}\n" +
                         $"Heading: {result.Heading}\n" +
                         $"Semantic Type: {result.SemanticType}\n" +
                         $"Content: {result.Content}"));
@@ -268,6 +269,30 @@ public sealed class QuestionService(
         }
 
         return GetProjectId(result.Source);
+    }
+
+    private static string GetProjectTechnologies(
+        KnowledgeRetrievalItem result)
+    {
+        if (!result.Metadata.TryGetValue(
+                "technologies",
+                out var value)
+            || value is null)
+        {
+            return string.Empty;
+        }
+
+        if (value is System.Text.Json.JsonElement json
+            && json.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            return string.Join(
+                ", ",
+                json.EnumerateArray()
+                    .Select(item => item.GetString())
+                    .Where(static text => !string.IsNullOrWhiteSpace(text)));
+        }
+
+        return value.ToString() ?? string.Empty;
     }
 
     private string GetProjectUrl(
