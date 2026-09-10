@@ -57,7 +57,11 @@ var knowledgeRetrievalService =
 // TEST: Retrieval evaluation code
 var questions = new[]
 {
-    "Gi meg topp 10 prosjekter du har gjort som inneholder html, css, sql eller javascript.",
+    // Test retrieval of projects with PostgreSQL
+    "How many project have you worked on with PostgreSQL, and what where they all about?",
+
+    // Test retrieval of projects with specific technologies
+    //"Gi meg topp 10 prosjekter du har gjort som inneholder html, css, sql eller javascript.",
 
     // Test broad technology experience
     //"What experience do you have with agile development?",
