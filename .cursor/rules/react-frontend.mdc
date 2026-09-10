@@ -37,6 +37,8 @@ In the reply, say what you did not visually verify.
 # GOOD  keep frontend request/response types aligned with the existing .NET API
 ```
 
+- Locale strings are ordinary UTF-8 source. Keep Æ, Ø, Å, æ, ø, å as real characters in i18n files (especially `src/frontend/i18n/locales/nb.ts`), not `?`, U+FFFD, or ASCII stand-ins. Same encoding as the rest of the repo: UTF-8 without BOM.
+
 - Keep API communication out of presentational UI components.
 - Put HTTP/API logic in a dedicated client module.
 - Keep frontend state local (`useState` / context) unless complexity requires more.

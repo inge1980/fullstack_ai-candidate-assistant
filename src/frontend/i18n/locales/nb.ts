@@ -23,6 +23,18 @@ export const nb = {
     sendAgain: "Send på nytt",
     cancelEdit: "Avbryt",
   },
+  history: {
+    title: "Historikk",
+    empty: "Ingen spørsmål ennå",
+    clear: "Tøm historikk",
+    clearTitle: "Tømme historikken?",
+    clearWarning:
+      "Dette sletter alle lagrede spørsmål og svar fra denne nettleseren. Det som vises i chatten nå blir stående til du stiller et nytt spørsmål.",
+    clearConfirm: "Tøm",
+    clearCancel: "Avbryt",
+    view: "Vis lagret svar",
+    reask: "Still dette spørsmålet på nytt", 
+  },
   language: {
     englishUs: "English (US)",
     norwegianNb: "Norsk bokmål",
@@ -36,3 +48,4 @@ export const nb = {
     switchCancel: "Avbryt",
   },
 };
+ 

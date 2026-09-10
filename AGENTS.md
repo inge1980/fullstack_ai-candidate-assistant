@@ -61,7 +61,7 @@ Intended retrieval (knowledge doc + console): top **10** from the store, top **5
 - Frontmatter `technologies` is the declared stack, not every technology mentioned in prose.
 - Frontmatter `organization` and `environment` decide school/personal/company and production vs development. Prose such as live data does not override those fields.
 - Answer prompt must refuse unsupported claims (invented tech, responsibilities, projects, production use).
-- Knowledge, embeddings, retrieval, and the answer-prompt template stay English. `locale: nb` translates the user question to English before embedding and asks the LLM for fluent Norwegian Bokmål, not a literal translation. `locale: us` skips translation and answers in American English.
+- Knowledge, embeddings, retrieval, and the answer-prompt template stay English. `locale: nb` translates the user question to English before embedding and asks the LLM for fluent Norwegian BokmÃ¥l, not a literal translation. `locale: us` skips translation and answers in American English.
 - LLM providers are replaceable. Fallback order is `Llm.Providers[]` then each provider's `Models[]`.
 - Secrets stay in env (`Google__ApiKey`, `Groq__ApiKey`, `OpenRouter__ApiKey`). Non-secret provider/model lists live in `appsettings.json`.
 - Frontend is a Vite client of the API only. No RAG, embeddings, or LLM calls in the browser. No auth or public deploy in this stage.
@@ -110,7 +110,7 @@ src/frontend                     Vite + React + TypeScript + Tailwind chat UI
 | `Questions/QuestionService.cs` | Orchestrates retrieve / prompt / LLM / source URLs. Rule-based `QuestionIntentDetector` runs on the original question. `list`/`filter-list` with N uses a wider retrieve window; `filter-list`/`count` without N keep the 25-hit window; catalog intents send one chunk per project. |
 | `Questions/QuestionIntentDetector.cs` | Keyword intent: `detail`, `list`, `count`, `filter-list`, plus optional `requestedCount` |
 | `Questions/AnswerPromptFormatter.cs` | Shared LLM context/prompt fill used by API and CandidateConsoleAssistant |
-| `Questions/PromptContextSelector.cs` | Default retrieve 25 / top-10 chunks for focused detail. Broad "have you used / what experience" retrieves 80 (cap 100), then one chunk per `source` (up to 10). `list`/`filter-list`+N: wider retrieve, one chunk per `source`, take N; `filter-list`/`count` without N: one chunk per `source` in the 25-hit window. Broad "what experience" + `and`/`og` is a tech union in the answer prompt; `both`/`b�de`/`have you used A and B` is an intersection |
+| `Questions/PromptContextSelector.cs` | Default retrieve 25 / top-10 chunks for focused detail. Broad "have you used / what experience" retrieves 80 (cap 100), then one chunk per `source` (up to 10). `list`/`filter-list`+N: wider retrieve, one chunk per `source`, take N; `filter-list`/`count` without N: one chunk per `source` in the 25-hit window. Broad "what experience" + `and`/`og` is a tech union in the answer prompt; `both`/`både`/`have you used A and B` is an intersection |
 | `Questions/IQuestionService.cs` | Ask contract |
 | `Questions/AskQuestionRequest.cs` / `AskQuestionResponse.cs` | API DTOs (`Locale` is `us` or `nb`; response includes `intent`) |
 | `Questions/QuestionLocale.cs` | Locale normalize, query-translation flag, answer-language instruction |
@@ -138,7 +138,7 @@ Config: `Configuration/AppConfiguration.cs`.
 
 ### Frontend (`src/frontend`)
 
-Vite + React + TypeScript + Tailwind. Chat UI posts `{ question, locale }` (`us` | `nb`) to `POST /api/v1/Questions` via a Vite proxy (`/api` ? `http://localhost:5179`). While typing, the form previews intent via `POST /api/v1/Questions/intent` (same keyword detector, no LLM). Chrome copy uses `i18next` / `react-i18next`. The header language menu uses `country-flag-icons` (US / NO) plus `sr-only` / `aria-label` names (`English (US)`, `Norsk bokmål`). Locale is stored in `localStorage`. Types live in `src/frontend/client/types.ts`; fetch lives in `src/frontend/client/questions.ts`. Assistant answers are rendered with `react-markdown` plus `remark-gfm` (tables, strikethrough, thematic breaks; no raw HTML). Flattened one-line GFM tables are split into rows before parse. No CORS on the API. Swagger on `:5179` is unchanged.
+Vite + React + TypeScript + Tailwind. Chat UI posts `{ question, locale }` (`us` | `nb`) to `POST /api/v1/Questions` via a Vite proxy (`/api` ? `http://localhost:5179`). While typing, the form previews intent via `POST /api/v1/Questions/intent` (same keyword detector, no LLM). Chrome copy uses `i18next` / `react-i18next`. The header language menu uses `country-flag-icons` (US / NO) plus `sr-only` / `aria-label` names (`English (US)`, `Norsk bokmål`). Locale is stored in `localStorage`. Successful Q&A pairs are stored in `localStorage` (`mind-chat-history`) and listed in a left sidebar (`ChatHistory`) with view-saved-answer and re-ask icon buttons, plus a confirmed clear-history action. Types live in `src/frontend/client/types.ts`; fetch lives in `src/frontend/client/questions.ts`. Assistant answers are rendered with `react-markdown` plus `remark-gfm` (tables, strikethrough, thematic breaks; no raw HTML). Flattened one-line GFM tables are split into rows before parse. No CORS on the API. Swagger on `:5179` is unchanged.
 
 ---
 
@@ -193,6 +193,7 @@ GitHub source URLs: `GitHub:Owner`, `Repository`, `Branch`, `ProjectsFolder`. `Q
 - `EmbeddingService` ignores `appsettings.json` `Embeddings` / `Ollama` sections.
 - `EmbeddingService` reads `OLLAMA_*` from process env at type init. In console tools, call `AppConfiguration.Build()` before `new EmbeddingService()` so `.env` is loaded. The API already loads config first.
 - No automated tests, no retrieval eval dataset, no frontmatter schema validation.
+- Text files are UTF-8 without BOM with literal æ/ø/å (especially `src/frontend/i18n/locales/nb.ts`). Do not use PowerShell `-Encoding utf8NoBOM` or the console default; those produce U+FFFD. Prefer editor file tools or Python `encoding="utf-8"`.
 - Frontend visual QA is manual; agents should not use the browser to confirm placement or styling unless asked or a runtime failure cannot be diagnosed from code or logs.
 - Out of scope: auth, production deploy, candidate-to-job matching product, hybrid search.
 

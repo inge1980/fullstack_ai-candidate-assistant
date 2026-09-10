@@ -13,5 +13,12 @@ alwaysApply: true
 - When requirements are ambiguous, identify the ambiguity before implementing.
 - Suggest tests for new business logic.
 - Never assume generated code is correct; explain why it works.
-- Create and edit text files as UTF-8 without BOM so Scandinavian letters stay intact (Ã¦, Ã¸, Ã¥, Ã†, Ã˜, Ã…). Do not write source, Markdown, JSON, prompts, or i18n as Windows-1252, UTF-16, or UTF-8 with BOM.
-- When creating files through the Windows shell, set encoding explicitly (PowerShell utf8NoBOM); do not rely on the console default. Binary files are unchanged.
+
+## File encoding
+
+Keep Scandinavian letters as real Unicode characters: Æ, Ø, Å, æ, ø, å. That applies to every text file (source, Markdown, JSON, prompts, rules, i18n). The highest-risk file in this repo is `src/frontend/i18n/locales/nb.ts`; the same rule applies to `us.ts` strings such as `Norsk bokmål`, C# comments, and docs.
+
+- Save text as UTF-8 **without** a BOM. Do not use Windows-1252, UTF-16, or UTF-8 with BOM (a BOM can break Markdown frontmatter and show up as junk in prompts).
+- Prefer the editor Write/StrReplace tools over the shell when the file contains non-ASCII.
+- Never replace Æ/Ø/Å with `?`, U+FFFD, `ae`/`oe`/`aa`, or `\u00e6`-style escapes in user-facing copy.
+- If the shell must write the file, use Python `encoding="utf-8"` (not `utf-8-sig`) or `[System.IO.File]::WriteAllText($path, $content, [System.Text.UTF8Encoding]::new($false))`. Do not use PowerShell `Set-Content -Encoding utf8` (BOM on Windows PowerShell 5.1) or `-Encoding utf8NoBOM` (not a valid encoding there; the console default then destroys the letters). Binary files are unchanged.

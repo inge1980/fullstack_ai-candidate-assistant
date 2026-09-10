@@ -23,6 +23,18 @@ export const us = {
     sendAgain: "Send again",
     cancelEdit: "Cancel",
   },
+  history: {
+    title: "History",
+    empty: "No questions yet",
+    clear: "Clear history",
+    clearTitle: "Clear question history?",
+    clearWarning:
+      "This removes all saved questions and answers from this browser. The current chat on screen stays until you ask something new.",
+    clearConfirm: "Clear",
+    clearCancel: "Cancel",
+    view: "View saved answer",
+    reask: "Ask this question again",
+  },
   language: {
     englishUs: "English (US)",
     norwegianNb: "Norsk bokmål",

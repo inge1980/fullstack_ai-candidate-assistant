@@ -6,6 +6,13 @@ import { formatIntentDebug, QuestionForm } from "./components/QuestionForm";
 import { MessageList, type ChatMessage } from "./components/MessageList";
 import { StatusBanner, type ChatStatus } from "./components/StatusBanner";
 import { LanguageMenu } from "./components/LanguageMenu";
+import { ChatHistory } from "./components/ChatHistory";
+import {
+  persistChatHistory,
+  readChatHistory,
+  upsertChatHistory,
+  type ChatHistoryItem,
+} from "./chatHistory";
 import { resolveAppLocale } from "./i18n/config";
 
 export function App() {
@@ -17,6 +24,7 @@ export function App() {
   const [isEditing, setIsEditing] = useState(false);
   const [editDraft, setEditDraft] = useState("");
   const [intent, setIntent] = useState<QuestionIntent | null>(null);
+  const [history, setHistory] = useState<ChatHistoryItem[]>(readChatHistory);
   const askGenerationRef = useRef(0);
   const intentPreviewRef = useRef(0);
   const locale = resolveAppLocale(i18n.resolvedLanguage ?? i18n.language);
@@ -98,6 +106,15 @@ export function App() {
         prompt: response.prompt ?? undefined,
       };
       setMessages((current) => [...current, assistantMessage]);
+      setHistory((current) => {
+        const next = upsertChatHistory(current, {
+          question: trimmed,
+          answer: response.answer,
+          prompt: response.prompt ?? undefined,
+        });
+        persistChatHistory(next);
+        return next;
+      });
       setIntent(response.intent ?? null);
       setStatus("idle");
     } catch (error) {
@@ -124,79 +141,121 @@ export function App() {
     setStatus("empty");
   }
 
+  function handleViewHistory(item: ChatHistoryItem) {
+    askGenerationRef.current += 1;
+    setDraft("");
+    setEditDraft("");
+    setIsEditing(false);
+    setErrorMessage(null);
+    setIntent(null);
+    intentPreviewRef.current += 1;
+    setStatus("idle");
+    setMessages([
+      {
+        id: `${item.id}-user`,
+        role: "user",
+        content: item.question,
+      },
+      {
+        id: `${item.id}-assistant`,
+        role: "assistant",
+        content: item.answer,
+        prompt: item.prompt,
+      },
+    ]);
+  }
+
+  function handleClearHistory() {
+    setHistory([]);
+    persistChatHistory([]);
+  }
+
   return (
-    <div className="mx-auto flex min-h-screen max-w-2xl flex-col gap-4 px-4 py-8">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold text-ink">M.I.N.D</h1>
-          <p className="text-sm text-muted">{t("app.subtitle")}</p>
-        </div>
-        <LanguageMenu needsReset={needsLanguageReset} onReset={handleReset} />
-      </header>
-
-      <StatusBanner
-        status={status}
-        errorMessage={errorMessage}
-        hasMessages={messages.length > 0}
+    <div className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-4 py-8 md:flex-row md:items-start">
+      <ChatHistory
+        items={history}
+        activeQuestion={previousQuestion}
+        disabled={isLoading}
+        onView={handleViewHistory}
+        onReask={(question) => {
+          void ask(question);
+        }}
+        onClear={handleClearHistory}
       />
 
-      <MessageList
-        messages={messages}
-        isLoading={isLoading}
-        isEditingUser={isEditing}
-        editValue={editDraft}
-        onEditValueChange={setEditDraft}
-        onStartEdit={() => {
-          setEditDraft(previousQuestion);
-          setIsEditing(true);
-        }}
-        onCancelEdit={() => {
-          setIsEditing(false);
-          setEditDraft("");
-        }}
-        onResend={() => {
-          void ask(editDraft);
-        }}
-      />
+      <div className="flex min-w-0 flex-1 flex-col gap-4">
+        <header className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-semibold text-ink">M.I.N.D</h1>
+            <p className="text-sm text-muted">{t("app.subtitle")}</p>
+          </div>
+          <LanguageMenu needsReset={needsLanguageReset} onReset={handleReset} />
+        </header>
 
-      {messages.length === 0 ? (
-        <QuestionForm
-          value={draft}
-          disabled={isLoading}
-          intent={intent}
-          onChange={setDraft}
-          onSubmit={() => {
-            void ask(draft);
+        <StatusBanner
+          status={status}
+          errorMessage={errorMessage}
+          hasMessages={messages.length > 0}
+        />
+
+        <MessageList
+          messages={messages}
+          isLoading={isLoading}
+          isEditingUser={isEditing}
+          editValue={editDraft}
+          onEditValueChange={setEditDraft}
+          onStartEdit={() => {
+            setEditDraft(previousQuestion);
+            setIsEditing(true);
+          }}
+          onCancelEdit={() => {
+            setIsEditing(false);
+            setEditDraft("");
+          }}
+          onResend={() => {
+            void ask(editDraft);
           }}
         />
-      ) : (
-        <p className="text-xs text-muted" aria-live="polite">
-          {formatIntentDebug(intent)}
-        </p>
-      )}
 
-      {messages.length > 0 && !isLoading ? (
-        <div className="flex flex-wrap gap-2">
-          <button
-            className="cursor-pointer rounded-md bg-invert px-4 py-2 text-invert-fg transition-colors hover:bg-invert-hover"
-            type="button"
-            onClick={handleReset}
-          >
-            {t("app.askNewQuestion")}
-          </button>
-          {isEditing ? null : (
+        {messages.length === 0 ? (
+          <QuestionForm
+            value={draft}
+            disabled={isLoading}
+            intent={intent}
+            onChange={setDraft}
+            onSubmit={() => {
+              void ask(draft);
+            }}
+          />
+        ) : (
+          <p className="text-xs text-muted" aria-live="polite">
+            {formatIntentDebug(intent)}
+          </p>
+        )}
+
+        {messages.length > 0 && !isLoading ? (
+          <div className="flex flex-wrap gap-2">
             <button
-              className="cursor-pointer rounded-md border border-line bg-surface px-4 py-2 text-ink transition-colors hover:border-line-focus hover:bg-surface-muted"
+              className="cursor-pointer rounded-md bg-invert px-4 py-2 text-invert-fg transition-colors hover:bg-invert-hover"
               type="button"
-              onClick={() => {
-                void ask(previousQuestion);
-              }}
+              onClick={handleReset}
             >
-              {t("app.askSameQuestion")}
+              {t("app.askNewQuestion")}
             </button>
-          )}
-        </div>
-      ) : null}
+            {isEditing ? null : (
+              <button
+                className="cursor-pointer rounded-md border border-line bg-surface px-4 py-2 text-ink transition-colors hover:border-line-focus hover:bg-surface-muted"
+                type="button"
+                onClick={() => {
+                  void ask(previousQuestion);
+                }}
+              >
+                {t("app.askSameQuestion")}
+              </button>
+            )}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
