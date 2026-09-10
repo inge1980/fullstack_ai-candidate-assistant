@@ -25,14 +25,32 @@ public static class PromptContextSelector
             StringComparison.OrdinalIgnoreCase);
     }
 
+    public static bool IsList(QuestionIntent intent)
+    {
+        return string.Equals(
+            intent.Category,
+            QuestionIntentDetector.List,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
     public static bool IsFilterListWithCount(QuestionIntent intent)
     {
         return IsFilterList(intent) && intent.RequestedCount is > 0;
     }
 
+    public static bool IsListWithCount(QuestionIntent intent)
+    {
+        return IsList(intent) && intent.RequestedCount is > 0;
+    }
+
+    public static bool IsTopNList(QuestionIntent intent)
+    {
+        return IsFilterListWithCount(intent) || IsListWithCount(intent);
+    }
+
     public static int RetrievalLimit(QuestionIntent intent)
     {
-        if (!IsFilterListWithCount(intent))
+        if (!IsTopNList(intent))
         {
             return DefaultRetrievalLimit;
         }
@@ -48,7 +66,7 @@ public static class PromptContextSelector
         QuestionIntent intent,
         IReadOnlyList<KnowledgeRetrievalItem> items)
     {
-        if (IsFilterListWithCount(intent))
+        if (IsTopNList(intent))
         {
             return UniqueProjects(items)
                 .Take(intent.RequestedCount!.Value)
