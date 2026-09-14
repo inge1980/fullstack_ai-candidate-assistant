@@ -54,6 +54,10 @@ var knowledgeRetrievalService =
 // TEST: Retrieval evaluation code
 var questions = new[]
 {
+    // Tests: Emotions of the developer
+    "What decision in what project are you most proud of?",
+    //Error: Hallicinates feelings.
+
     // Tests: Intent. what projects is not a list cue, so this stays detail (retrieve 25, first 10 chunks, not unique-by-source).
     "What projects involved Next.js?",
     // Lacking answer: "..and a live demo of the Next.js-powered app is available." , but missing the link.
