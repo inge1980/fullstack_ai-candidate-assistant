@@ -54,6 +54,74 @@ var knowledgeRetrievalService =
 // TEST: Retrieval evaluation code
 var questions = new[]
 {
+    // Tests: Intent. what projects is not a list cue, so this stays detail (retrieve 25, first 10 chunks, not unique-by-source).
+    "What projects involved Next.js?",
+    // Lacking answer: "..and a live demo of the Next.js-powered app is available." , but missing the link.
+
+    // Tests: Union (what experience + and)
+    "What experience do I have with SQL Server and MySQL?",
+    // Lacking answer: ERP, PIM, Canteen, GDPR, but missing Bootstrap migration (did not make it to top 10)
+
+    // Tests: list intent with status
+    "Which projects are still active?",
+    // Error: Projects with status completed are shown in the answer.
+
+    // Tests: Section inventory without a specific projects --> forced detail. Will we get one projects Challenge chunk instead of a cross-project inventory?
+    "List the challenges.",
+    // Error: Lists challenges for the random top 10 project-chunks that got sent to the LLM.
+
+
+
+
+
+    //Tests: Intent. \bwhich\s+projects?\b does not match which of my projects
+    //"Which of my projects used SQL Server?",
+
+    // Tests: Unsupported-claim refusal (Kubernetes appears only as an eval topic inside the RAG knowledge doc, not as a technology)
+    //"Have you used Kubernetes?",
+
+    // Tests: Intersection (have you used A and B)
+    //"Have you used PHP and C# in the same project?",
+
+    // Tests: Section-inventory override (list + technical decisions + named project → detail)
+    //"List the technical decisions in the Lost & Found API.",
+
+    // Tests: Unique-sources the retrieve window and lets the LLM number them.
+    //"How many projects have I completed at Moava?",
+
+    // Tests: Broad “have you done” + production language that may not match in production / production experience
+    //"Have you done production work at Episteme?",
+
+    // Tests: Named-project retrieval, sibling-doc bleed (ERP/canteen)
+    //"Tell me about the PIM integration at Episteme.",
+
+    //Tests: React Native ≠ React web
+    //"Have you used React Native?",
+
+    // Tests: Concepts (offline-first) rather than a technologies token
+    //"What experience do I have with offline-first mobile apps?",
+
+    // Tests: Rare stack token
+    //"Have you used Subversion?",
+
+    // Tests: Token drop (C# length 1) plus production filter. Metadata "csharp" may never match the query term
+    //"Have you used C# in production?",
+
+    // Tests: Role metadata vs “AI/LLM experience”. n8n is the only AI Developer role.
+    //"Have you worked as an AI Developer?",
+
+    // Tests: Organization Personal and environment: production. Production filter keeps portfolio, while shopping list and n8n are personal development.
+    //"Have you shipped a personal project to production?",
+
+    // Tests: Alias (24SevenOffice → Finago)
+    //"Describe the hotel booking case for Finago.",
+
+    // Tests: Dependency that is not ASP.NET Core, Docker, or PostgreSQL-with-.NET. Should get Lost & Found, while RAG should not invent EF.
+    //"Have you used Entity Framework Core?",
+
+    // Tests: Documented non-capability. Prompt must refuse or clearly say publishing was out of scope.
+    //"Did you publish social media posts with the n8n workflow?",
+
     // Test retrieval of projects with PostgreSQL
     //"How many project have you worked on with PostgreSQL, and what where they all about?",
 
@@ -77,7 +145,7 @@ var questions = new[]
     //"What production experience do I have?"
 
     // PostgreSQL-related questions to evaluate retrieval and ranking
-    "Have you built systems involving PostgreSQL?",     //  Multiple projects 
+    //"Have you built systems involving PostgreSQL?",     //  Multiple projects 
     //"What experience do you have with PostgreSQL?",       // Broad knowledge and specific examples
     //"Have you used pgvector?",                          // RAG-prosject ranked as nr 1, but also other projects
     //"Have you used PostgreSQL with .NET?",              // Lost & Found high ranked
