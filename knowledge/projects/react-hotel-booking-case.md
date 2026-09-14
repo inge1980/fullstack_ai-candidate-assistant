@@ -40,6 +40,7 @@ dependencies:
 
 links:
   github: https://github.com/inge1980/hotel_booking_case_2024_improved
+  portfolio: Not available
   live: https://hotel-booking-case-2024-improved.vercel.app
 
 ---
