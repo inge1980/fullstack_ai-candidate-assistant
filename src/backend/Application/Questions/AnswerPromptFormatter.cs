@@ -109,56 +109,146 @@ public static class AnswerPromptFormatter
 
     public static string ProjectLinks(KnowledgeRetrievalItem result)
     {
-        if (!result.Metadata.TryGetValue("links", out var value)
-            || value is null)
+        var links = KnownHttpLinks(result);
+        if (links.Count == 0)
         {
             return string.Empty;
         }
 
-        if (value is JsonElement json
-            && json.ValueKind == JsonValueKind.Object)
+        var title = ProjectTitle(result);
+        var titleAssigned = false;
+        var lines = new List<string>();
+
+        foreach (var kind in LinkKindOrder)
         {
-            return string.Join(
-                ", ",
-                json.EnumerateObject()
-                    .Select(property => FormatLinkEntry(
-                        property.Name,
-                        property.Value.ValueKind == JsonValueKind.String
-                            ? property.Value.GetString()
-                            : property.Value.ToString()))
-                    .Where(static text => !string.IsNullOrWhiteSpace(text)));
+            if (!links.TryGetValue(kind, out var url))
+            {
+                continue;
+            }
+
+            var useProjectTitle = !titleAssigned;
+            titleAssigned = true;
+            lines.Add(FormatKnownLinkLine(kind, title, url, useProjectTitle));
         }
 
-        if (value is IDictionary<string, object?> dictionary)
-        {
-            return string.Join(
-                ", ",
-                dictionary
-                    .Select(pair => FormatLinkEntry(
-                        pair.Key,
-                        pair.Value?.ToString()))
-                    .Where(static text => !string.IsNullOrWhiteSpace(text)));
-        }
-
-        return value.ToString() ?? string.Empty;
+        return string.Join("\n", lines);
     }
+
+    private static readonly string[] LinkKindOrder =
+    [
+        "github",
+        "live",
+        "portfolio"
+    ];
 
     private static string LinksLine(KnowledgeRetrievalItem result)
     {
         var links = ProjectLinks(result);
         return string.IsNullOrWhiteSpace(links)
             ? string.Empty
-            : $"Links: {links}\n";
+            : $"Links:\n{links}\n";
     }
 
-    private static string? FormatLinkEntry(string name, string? url)
+    private static Dictionary<string, string> KnownHttpLinks(
+        KnowledgeRetrievalItem result)
     {
-        if (string.IsNullOrWhiteSpace(name)
-            || string.IsNullOrWhiteSpace(url))
+        var links = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        foreach (var (name, url) in EnumerateLinkPairs(result))
         {
-            return null;
+            var kind = NormalizeLinkKind(name);
+            if (kind is null
+                || url is null
+                || !IsHttpUrl(url))
+            {
+                continue;
+            }
+
+            links[kind] = url.Trim();
         }
 
-        return $"{name}: {url.Trim()}";
+        return links;
+    }
+
+    private static IEnumerable<(string Name, string? Url)> EnumerateLinkPairs(
+        KnowledgeRetrievalItem result)
+    {
+        if (!result.Metadata.TryGetValue("links", out var value)
+            || value is null)
+        {
+            yield break;
+        }
+
+        if (value is JsonElement json
+            && json.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in json.EnumerateObject())
+            {
+                var url = property.Value.ValueKind == JsonValueKind.String
+                    ? property.Value.GetString()
+                    : property.Value.ToString();
+                yield return (property.Name, url);
+            }
+
+            yield break;
+        }
+
+        if (value is IDictionary<string, object?> dictionary)
+        {
+            foreach (var pair in dictionary)
+            {
+                yield return (pair.Key, pair.Value?.ToString());
+            }
+        }
+    }
+
+    private static string? NormalizeLinkKind(string name)
+    {
+        return name.Trim().ToLowerInvariant() switch
+        {
+            "github" or "code" => "github",
+            "live" or "demo" => "live",
+            "portfolio" => "portfolio",
+            _ => null
+        };
+    }
+
+    private static bool IsHttpUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return false;
+        }
+
+        var trimmed = url.Trim();
+        if (trimmed.Equals("Not available", StringComparison.OrdinalIgnoreCase)
+            || trimmed.Equals("n/a", StringComparison.OrdinalIgnoreCase)
+            || trimmed.Equals("none", StringComparison.OrdinalIgnoreCase)
+            || trimmed.Equals("null", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return Uri.TryCreate(trimmed, UriKind.Absolute, out var uri)
+            && (uri.Scheme == Uri.UriSchemeHttp
+                || uri.Scheme == Uri.UriSchemeHttps);
+    }
+
+    private static string FormatKnownLinkLine(
+        string kind,
+        string projectTitle,
+        string url,
+        bool useProjectTitle)
+    {
+        var (label, typeText) = kind switch
+        {
+            "github" => ("GitHub (code)", "GitHub"),
+            "live" => ("Live (demo)", "demo"),
+            "portfolio" => ("Portfolio (article)", "portfolio"),
+            _ => (kind, kind)
+        };
+
+        var text = useProjectTitle ? projectTitle : typeText;
+        return $"- {label}: [{text}]({url})";
     }
 }

@@ -60,6 +60,7 @@ Intended retrieval (knowledge doc + console): top **10** from the store, top **5
 - Same embedding model for documents and queries. Changing the model or dimensions requires a full re-index.
 - Frontmatter `technologies` is the declared stack, not every technology mentioned in prose.
 - Frontmatter `organization` and `environment` decide school/personal/company and production vs development. Prose such as live data does not override those fields.
+- Frontmatter `links` keys are `github` (code), `live` (demo), and `portfolio` (article). Naming a project in an answer should include every present link. Environment is classification, not a URL.
 - Answer prompt must refuse unsupported claims (invented tech, responsibilities, projects, production use).
 - Knowledge, embeddings, retrieval, and the answer-prompt template stay English. `locale: nb` translates the user question to English before embedding and asks the LLM for fluent Norwegian BokmÃ¥l, not a literal translation. `locale: us` skips translation and answers in American English.
 - LLM providers are replaceable. Fallback order is `Llm.Providers[]` then each provider's `Models[]`.
@@ -109,14 +110,14 @@ src/frontend                     Vite + React + TypeScript + Tailwind chat UI
 | `Knowledge/KnowledgeRetrievalResult.cs` | Ranked items (source, heading, semantic type, content, scores) |
 | `Questions/QuestionService.cs` | Orchestrates retrieve / prompt / LLM / source URLs. Rule-based `QuestionIntentDetector` runs on the original question. `list`/`filter-list` with N uses a wider retrieve window; `filter-list`/`count` without N keep the 25-hit window; catalog intents send one chunk per project. |
 | `Questions/QuestionIntentDetector.cs` | Keyword intent: `detail`, `list`, `count`, `filter-list`, plus optional `requestedCount` |
-| `Questions/AnswerPromptFormatter.cs` | Shared LLM context/prompt fill used by API and CandidateConsoleAssistant. Context includes Organization, Environment, Technologies, and non-empty Links. |
+| `Questions/AnswerPromptFormatter.cs` | Shared LLM context/prompt fill used by API and CandidateConsoleAssistant. Context includes Organization, Environment, Technologies, and http(s) Links as ready Markdown (GitHub/live/portfolio). |
 | `Questions/PromptContextSelector.cs` | Default retrieve 25 / top-10 chunks for focused detail. Broad "have you used / what experience" retrieves 80 (cap 100), then one chunk per `source` (up to 10). `list`/`filter-list`+N: wider retrieve, one chunk per `source`, take N; `filter-list`/`count` without N: one chunk per `source` in the 25-hit window. Broad "what experience" + `and`/`og` is a tech union in the answer prompt; `both`/`både`/`have you used A and B` is an intersection |
 | `Questions/IQuestionService.cs` | Ask contract |
 | `Questions/AskQuestionRequest.cs` / `AskQuestionResponse.cs` | API DTOs (`Locale` is `us` or `nb`; response includes `intent`) |
 | `Questions/QuestionLocale.cs` | Locale normalize, query-translation flag, answer-language instruction |
 | `Questions/QuestionSource.cs` / `QuestionRelevance.cs` | Evidence payload |
 | `Questions/QuestionItem.cs` / `QuestionItemStatus.cs` / `QuestionDebugInfo.cs` | Extra question types |
-| `Prompts/answer/answer-prompt-v1.md` ? `v8.md` | Prompt history; **runtime is v8** (copied to output). v8 includes project `Links` when mentioning a repo or live demo. |
+| `Prompts/answer/answer-prompt-v1.md` ? `v8.md` | Prompt history; **runtime is v8** (copied to output). v8 includes each present GitHub, live, and portfolio link when a project is named. |
 | `Prompts/translate/query-translate-prompt-v1.md` | English retrieval query for `nb` |
 
 ### Infrastructure (`src/backend/Infrastructure`)

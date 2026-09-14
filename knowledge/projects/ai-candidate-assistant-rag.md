@@ -403,7 +403,7 @@ The answer prompt was also strengthened with explicit instructions to:
 
 - Use retrieved context as evidence rather than repeating it mechanically.
 - Avoid inventing technologies, responsibilities, projects, experience, or URLs.
-- Include a repository or live-demo URL from the project's Links field as a Markdown link whose visible text is the project title, not the raw URL.
+- When naming a project, include every present Links URL (GitHub/code, live/demo, portfolio article) as Markdown. Put the project title on the first available link (GitHub, then live, then portfolio). Extra links use type labels (`demo`, `portfolio`), never the raw URL.
 - Avoid inferring production experience unless the retrieved evidence explicitly supports it.
 - Distinguish between evidence that a technology was used and evidence that it was used in production.
 - State clearly when the evidence is insufficient.

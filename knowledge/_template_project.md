@@ -34,6 +34,9 @@ links:
   github: https://github.com/username/github-repo-name
   portfolio: https://inge1980.github.io/portfolio/projects/
   live: https://example.com
+# github = source code
+# portfolio = portfolio article
+# live = running demo
 
 ---
 
