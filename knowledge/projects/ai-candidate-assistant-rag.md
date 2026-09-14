@@ -51,7 +51,6 @@ dependencies:
 links:
   github: https://github.com/inge1980/fullstack_ai-candidate-assistant
   portfolio: https://inge1980.github.io/portfolio/projects/airagcandidate/
-  live: Not available
 
 ---
 

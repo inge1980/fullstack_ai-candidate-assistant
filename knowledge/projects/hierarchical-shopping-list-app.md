@@ -55,9 +55,7 @@ dependencies:
   - react-native-sqlite-storage
 
 links:
-  github: Not available
   portfolio: https://inge1980.github.io/portfolio/projects/shoppinglist/
-  live: Not available
 
 ---
 

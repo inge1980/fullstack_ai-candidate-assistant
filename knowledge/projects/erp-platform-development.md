@@ -40,9 +40,7 @@ concepts:
 dependencies:
 
 links:
-  github: Not available
   portfolio: https://inge1980.github.io/portfolio/projects/epistemeerp/
-  live: Not available
 
 ---
 

@@ -47,7 +47,6 @@ dependencies:
 links:
   github: https://github.com/inge1980/module3_backend_02_lostandfound
   portfolio: https://inge1980.github.io/portfolio/projects/lostnfoundapi/
-  live: Not available
 
 ---
 

@@ -49,7 +49,6 @@ concepts:
   - asana
 
 links:
-  github: Not available
   portfolio: https://inge1980.github.io/portfolio/projects/mobilefirst/
   live: https://alt.moava.org/
 

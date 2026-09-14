@@ -57,7 +57,6 @@ dependencies:
 links:
   github: https://github.com/inge1980/n8n-social-content-generator
   portfolio: https://inge1980.github.io/portfolio/projects/n8ncontentgenerator/
-  live: Not available
 
 ---
 

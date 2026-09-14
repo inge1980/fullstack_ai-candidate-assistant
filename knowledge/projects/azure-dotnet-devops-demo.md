@@ -40,7 +40,6 @@ dependencies:
 links:
   github: https://github.com/inge1980/module3_backend_04_terraform_azure
   portfolio: https://inge1980.github.io/portfolio/projects/azuredevops/
-  live: Not available
 
 ---
 

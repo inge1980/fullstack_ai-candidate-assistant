@@ -64,7 +64,6 @@ dependencies:
 
 links:
   github: https://github.com/inge1980/portfolio/
-  portfolio: Not available
   live: https://inge1980.github.io/portfolio/
 
 ---
