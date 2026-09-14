@@ -17,9 +17,11 @@ technologies:
   - php
   - mysql
   - javascript
-  - bootstrap-3
+  - jquery
+  - bootstrap
   - css
   - html
+  - subversion
 
 concepts:
   - frontend-modernization
