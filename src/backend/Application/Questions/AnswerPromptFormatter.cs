@@ -17,6 +17,7 @@ public static class AnswerPromptFormatter
                     $"Organization: {MetadataString(result, "organization")}\n" +
                     $"Environment: {MetadataString(result, "environment")}\n" +
                     $"Technologies: {ProjectTechnologies(result)}\n" +
+                    LinksLine(result) +
                     $"Heading: {result.Heading}\n" +
                     $"Semantic Type: {result.SemanticType}\n" +
                     $"Content: {result.Content}"));
@@ -104,5 +105,60 @@ public static class AnswerPromptFormatter
         }
 
         return value.ToString() ?? string.Empty;
+    }
+
+    public static string ProjectLinks(KnowledgeRetrievalItem result)
+    {
+        if (!result.Metadata.TryGetValue("links", out var value)
+            || value is null)
+        {
+            return string.Empty;
+        }
+
+        if (value is JsonElement json
+            && json.ValueKind == JsonValueKind.Object)
+        {
+            return string.Join(
+                ", ",
+                json.EnumerateObject()
+                    .Select(property => FormatLinkEntry(
+                        property.Name,
+                        property.Value.ValueKind == JsonValueKind.String
+                            ? property.Value.GetString()
+                            : property.Value.ToString()))
+                    .Where(static text => !string.IsNullOrWhiteSpace(text)));
+        }
+
+        if (value is IDictionary<string, object?> dictionary)
+        {
+            return string.Join(
+                ", ",
+                dictionary
+                    .Select(pair => FormatLinkEntry(
+                        pair.Key,
+                        pair.Value?.ToString()))
+                    .Where(static text => !string.IsNullOrWhiteSpace(text)));
+        }
+
+        return value.ToString() ?? string.Empty;
+    }
+
+    private static string LinksLine(KnowledgeRetrievalItem result)
+    {
+        var links = ProjectLinks(result);
+        return string.IsNullOrWhiteSpace(links)
+            ? string.Empty
+            : $"Links: {links}\n";
+    }
+
+    private static string? FormatLinkEntry(string name, string? url)
+    {
+        if (string.IsNullOrWhiteSpace(name)
+            || string.IsNullOrWhiteSpace(url))
+        {
+            return null;
+        }
+
+        return $"{name}: {url.Trim()}";
     }
 }

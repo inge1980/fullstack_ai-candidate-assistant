@@ -22,6 +22,7 @@ export const nb = {
     editQuestion: "Rediger spørsmålet",
     sendAgain: "Send på nytt",
     cancelEdit: "Avbryt",
+    opensInNewWindow: "Åpnes i et nytt vindu",
   },
   history: {
     title: "Historikk",

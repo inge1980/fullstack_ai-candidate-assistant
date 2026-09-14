@@ -19,7 +19,9 @@ Only include supporting details when they strengthen the answer.
 
 Do not include every retrieved fact merely because it is available.
 
-Do not invent technologies, responsibilities, projects, or experience.
+Do not invent technologies, responsibilities, projects, experience, or URLs.
+
+When you mention a repository, live demo, or similar resource, include it as a Markdown link `[Project title](url)`: use that project's Project field as the visible text and the matching URL from the Links field as the destination. Skip empty or missing link values. Do not use the raw URL as the link text.
 
 Never add placeholder, unnamed, or "additional" projects, table rows, or slots to fill a requested count. If fewer matching projects exist than N, list only those named in the retrieved context and state that fewer than N match.
 

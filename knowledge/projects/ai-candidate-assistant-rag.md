@@ -50,7 +50,8 @@ dependencies:
 
 links:
   github: https://github.com/inge1980/fullstack_ai-candidate-assistant
-  live:
+  portfolio: https://inge1980.github.io/portfolio/projects/airagcandidate/
+  live: Not available
 
 ---
 
@@ -402,7 +403,8 @@ The tool also generates and displays the answer-generation prompt, including the
 The answer prompt was also strengthened with explicit instructions to:
 
 - Use retrieved context as evidence rather than repeating it mechanically.
-- Avoid inventing technologies, responsibilities, projects, or experience.
+- Avoid inventing technologies, responsibilities, projects, experience, or URLs.
+- Include a repository or live-demo URL from the project's Links field as a Markdown link whose visible text is the project title, not the raw URL.
 - Avoid inferring production experience unless the retrieved evidence explicitly supports it.
 - Distinguish between evidence that a technology was used and evidence that it was used in production.
 - State clearly when the evidence is insufficient.

@@ -22,6 +22,7 @@ export const us = {
     editQuestion: "Edit question",
     sendAgain: "Send again",
     cancelEdit: "Cancel",
+    opensInNewWindow: "Opens in a new window",
   },
   history: {
     title: "History",

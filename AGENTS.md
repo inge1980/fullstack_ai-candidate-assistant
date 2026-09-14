@@ -45,7 +45,7 @@ Ingestion:
 
 Query (API):
 
-`POST /api/v1/Questions` (`question`, `locale` `us`|`nb`) -> if `nb`, LLM-translate the question to English (`query-translate-prompt-v1.md`) -> query embed (English) -> pgvector cosine search -> `MetadataEvidenceScorer` -> sort by combined score -> select prompt context (`list`/`filter-list` with N: one chunk per project, up to N; `filter-list`/`count` without N: one chunk per distinct `source` in the retrieve window; broad experience: one chunk per `source` unless a retrieved project is named; broad production questions keep only `environment: production`) -> `answer-prompt-v8.md` (`{{question}}` original text, `{{context}}` English chunks with Organization/Environment/Technologies, `{{answer_language_instruction}}`, `{{tech_list_instruction}}` union vs intersection) -> `LlmClientFactory` / `FallbackLlmClient` -> answer in the requested language + GitHub source URLs
+`POST /api/v1/Questions` (`question`, `locale` `us`|`nb`) -> if `nb`, LLM-translate the question to English (`query-translate-prompt-v1.md`) -> query embed (English) -> pgvector cosine search -> `MetadataEvidenceScorer` -> sort by combined score -> select prompt context (`list`/`filter-list` with N: one chunk per project, up to N; `filter-list`/`count` without N: one chunk per distinct `source` in the retrieve window; broad experience: one chunk per `source` unless a retrieved project is named; broad production questions keep only `environment: production`) -> `answer-prompt-v8.md` (`{{question}}` original text, `{{context}}` English chunks with Organization/Environment/Technologies/Links, `{{answer_language_instruction}}`, `{{tech_list_instruction}}` union vs intersection) -> `LlmClientFactory` / `FallbackLlmClient` -> answer in the requested language + GitHub source URLs
 
 Eval (console):
 
@@ -109,14 +109,14 @@ src/frontend                     Vite + React + TypeScript + Tailwind chat UI
 | `Knowledge/KnowledgeRetrievalResult.cs` | Ranked items (source, heading, semantic type, content, scores) |
 | `Questions/QuestionService.cs` | Orchestrates retrieve / prompt / LLM / source URLs. Rule-based `QuestionIntentDetector` runs on the original question. `list`/`filter-list` with N uses a wider retrieve window; `filter-list`/`count` without N keep the 25-hit window; catalog intents send one chunk per project. |
 | `Questions/QuestionIntentDetector.cs` | Keyword intent: `detail`, `list`, `count`, `filter-list`, plus optional `requestedCount` |
-| `Questions/AnswerPromptFormatter.cs` | Shared LLM context/prompt fill used by API and CandidateConsoleAssistant |
+| `Questions/AnswerPromptFormatter.cs` | Shared LLM context/prompt fill used by API and CandidateConsoleAssistant. Context includes Organization, Environment, Technologies, and non-empty Links. |
 | `Questions/PromptContextSelector.cs` | Default retrieve 25 / top-10 chunks for focused detail. Broad "have you used / what experience" retrieves 80 (cap 100), then one chunk per `source` (up to 10). `list`/`filter-list`+N: wider retrieve, one chunk per `source`, take N; `filter-list`/`count` without N: one chunk per `source` in the 25-hit window. Broad "what experience" + `and`/`og` is a tech union in the answer prompt; `both`/`både`/`have you used A and B` is an intersection |
 | `Questions/IQuestionService.cs` | Ask contract |
 | `Questions/AskQuestionRequest.cs` / `AskQuestionResponse.cs` | API DTOs (`Locale` is `us` or `nb`; response includes `intent`) |
 | `Questions/QuestionLocale.cs` | Locale normalize, query-translation flag, answer-language instruction |
 | `Questions/QuestionSource.cs` / `QuestionRelevance.cs` | Evidence payload |
 | `Questions/QuestionItem.cs` / `QuestionItemStatus.cs` / `QuestionDebugInfo.cs` | Extra question types |
-| `Prompts/answer/answer-prompt-v1.md` ? `v7.md` | Prompt history; **runtime is v7** (copied to output) |
+| `Prompts/answer/answer-prompt-v1.md` ? `v8.md` | Prompt history; **runtime is v8** (copied to output). v8 includes project `Links` when mentioning a repo or live demo. |
 | `Prompts/translate/query-translate-prompt-v1.md` | English retrieval query for `nb` |
 
 ### Infrastructure (`src/backend/Infrastructure`)
@@ -138,7 +138,7 @@ Config: `Configuration/AppConfiguration.cs`.
 
 ### Frontend (`src/frontend`)
 
-Vite + React + TypeScript + Tailwind. Chat UI posts `{ question, locale }` (`us` | `nb`) to `POST /api/v1/Questions` via a Vite proxy (`/api` ? `http://localhost:5179`). While typing, the form previews intent via `POST /api/v1/Questions/intent` (same keyword detector, no LLM). Chrome copy uses `i18next` / `react-i18next`. The header language menu uses `country-flag-icons` (US / NO) plus `sr-only` / `aria-label` names (`English (US)`, `Norsk bokmål`). Locale is stored in `localStorage`. Successful Q&A pairs are stored in `localStorage` (`mind-chat-history`) and listed in a left sidebar (`ChatHistory`) with view-saved-answer and re-ask icon buttons, plus a confirmed clear-history action. Types live in `src/frontend/client/types.ts`; fetch lives in `src/frontend/client/questions.ts`. Assistant answers are rendered with `react-markdown` plus `remark-gfm` (tables, strikethrough, thematic breaks; no raw HTML). Flattened one-line GFM tables are split into rows before parse. No CORS on the API. Swagger on `:5179` is unchanged.
+Vite + React + TypeScript + Tailwind. Chat UI posts `{ question, locale }` (`us` | `nb`) to `POST /api/v1/Questions` via a Vite proxy (`/api` ? `http://localhost:5179`). While typing, the form previews intent via `POST /api/v1/Questions/intent` (same keyword detector, no LLM). Chrome copy uses `i18next` / `react-i18next`. The header language menu uses `country-flag-icons` (US / NO) plus `sr-only` / `aria-label` names (`English (US)`, `Norsk bokmål`). Locale is stored in `localStorage`. Successful Q&A pairs are stored in `localStorage` (`mind-chat-history`) and listed in a left sidebar (`ChatHistory`) with view-saved-answer and re-ask icon buttons, plus a confirmed clear-history action. Types live in `src/frontend/client/types.ts`; fetch lives in `src/frontend/client/questions.ts`. Assistant answers are rendered with `react-markdown` plus `remark-gfm` (tables, strikethrough, thematic breaks; no raw HTML). Flattened one-line GFM tables are split into rows before parse. Markdown links open in a new tab and show an external-link icon. No CORS on the API. Swagger on `:5179` is unchanged.
 
 ---
 

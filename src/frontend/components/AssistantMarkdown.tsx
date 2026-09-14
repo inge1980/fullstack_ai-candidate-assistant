@@ -1,5 +1,7 @@
+import type { ReactNode } from "react";
 import Markdown from "react-markdown";
 import type { Components } from "react-markdown";
+import { useTranslation } from "react-i18next";
 import remarkGfm from "remark-gfm";
 
 /**
@@ -44,6 +46,42 @@ function prepareAssistantMarkdown(text: string): string {
   );
 }
 
+function AssistantMarkdownLink({
+  href,
+  children,
+}: {
+  href?: string;
+  children?: ReactNode;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <a
+      className="underline underline-offset-2 transition-colors hover:text-muted"
+      href={href}
+      rel="noopener noreferrer"
+      target="_blank"
+    >
+      {children}
+      <svg
+        aria-hidden="true"
+        className="mb-px ml-0.5 inline size-3.5"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <path
+          d="M14 5h5v5M19 5l-7 7M11 5H8a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3v-3"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.75"
+        />
+      </svg>
+      <span className="sr-only">{t("chat.opensInNewWindow")}</span>
+    </a>
+  );
+}
+
 const markdownComponents: Components = {
   p: ({ children }) => (
     <p className="mb-3 leading-relaxed last:mb-0">{children}</p>
@@ -68,16 +106,7 @@ const markdownComponents: Components = {
     <h3 className="mb-2 mt-3 text-sm font-semibold first:mt-0">{children}</h3>
   ),
   hr: () => <hr className="my-3 border-0 border-t border-line" />,
-  a: ({ href, children }) => (
-    <a
-      className="underline underline-offset-2 transition-colors hover:text-muted"
-      href={href}
-      rel="noopener noreferrer"
-      target="_blank"
-    >
-      {children}
-    </a>
-  ),
+  a: AssistantMarkdownLink,
   table: ({ children }) => (
     <div className="mb-3 overflow-x-auto last:mb-0">
       <table className="min-w-full border-collapse border border-line text-sm">
