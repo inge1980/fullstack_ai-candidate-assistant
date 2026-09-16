@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using Infrastructure.Embeddings;
 using Infrastructure.Reranking;
 
@@ -13,6 +14,7 @@ public sealed class KnowledgeRetrievalService(
     public async Task<KnowledgeRetrievalResult> RetrieveAsync(
         string query,
         int retrievalLimit = 10,
+        bool includeMatchingOrganizationOverviews = false,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(query))
@@ -31,22 +33,46 @@ public sealed class KnowledgeRetrievalService(
 
         Console.WriteLine($"-------------------------------------------");
         var embeddingStopwatch = Stopwatch.StartNew();
-        // Console.WriteLine("Generating query embedding...");
         var embedding =
             await embeddingService.Create(query);
-        // Console.WriteLine($"Embedding dimensions: {embedding.Length}");
         embeddingStopwatch.Stop();
         Console.WriteLine($"[Timing] Query embedding: {embeddingStopwatch.ElapsedMilliseconds} ms");
 
         var vectorSearchStopwatch = Stopwatch.StartNew();
-        // Console.WriteLine();
-        // Console.WriteLine("Searching PostgreSQL...");
         var results =
-            await vectorStore.SearchAsync(
+            (await vectorStore.SearchAsync(
                 embedding,
-                limit: retrievalLimit);
+                limit: retrievalLimit))
+            .ToList();
         vectorSearchStopwatch.Stop();
         Console.WriteLine($"[Timing] Vector search: {vectorSearchStopwatch.ElapsedMilliseconds} ms");
+
+        if (includeMatchingOrganizationOverviews)
+        {
+            var organizationStopwatch = Stopwatch.StartNew();
+            var organizationHits =
+                await vectorStore.SearchOverviewsMatchingOrganizationAsync(
+                    embedding,
+                    OrganizationQueryTerms(query));
+            organizationStopwatch.Stop();
+
+            var existingIds = results
+                .Select(result => result.Chunk.Id)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var added = 0;
+
+            foreach (var hit in organizationHits)
+            {
+                if (existingIds.Add(hit.Chunk.Id))
+                {
+                    results.Add(hit);
+                    added++;
+                }
+            }
+
+            Console.WriteLine(
+                $"[Timing] Organization overviews: {organizationStopwatch.ElapsedMilliseconds} ms added={added}");
+        }
 
         foreach (var result in results)
         {
@@ -72,5 +98,14 @@ public sealed class KnowledgeRetrievalService(
 
         return new KnowledgeRetrievalResult(
             Items: rankedResults);
+    }
+
+    private static IReadOnlyList<string> OrganizationQueryTerms(string query)
+    {
+        return Regex.Matches(query.ToLowerInvariant(), @"[a-z0-9]+(?:-[a-z0-9]+)*")
+            .Select(match => match.Value)
+            .Where(token => token.Length >= 4)
+            .Distinct()
+            .ToList();
     }
 }

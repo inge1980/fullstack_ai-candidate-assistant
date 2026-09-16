@@ -45,13 +45,13 @@ Ingestion:
 
 Query (API):
 
-`POST /api/v1/Questions` (`question`, `locale` `us`|`nb`) -> if `nb`, LLM-translate the question to English (`query-translate-prompt-v1.md`) -> query embed (English) -> pgvector cosine search -> `MetadataEvidenceScorer` -> sort by combined score -> select prompt context (`list`/`filter-list` with N: one chunk per project, up to N; `filter-list`/`count` without N: one chunk per distinct `source` in the retrieve window; broad experience: one chunk per `source` unless a retrieved project is named; broad production questions keep only `environment: production`) -> `answer-prompt-v8.md` (`{{question}}` original text, `{{context}}` English chunks with Organization/Environment/Technologies/Links, `{{answer_language_instruction}}`, `{{tech_list_instruction}}` union vs intersection) -> `LlmClientFactory` / `FallbackLlmClient` -> answer in the requested language + GitHub source URLs
+`POST /api/v1/Questions` (`question`, `locale` `us`|`nb`) -> if `nb`, LLM-translate the question to English (`query-translate-prompt-v1.md`) -> query embed (English) -> pgvector cosine search -> for catalog/broad-experience questions, merge `overview` chunks whose `organization` contains a query token -> `MetadataEvidenceScorer` -> sort by combined score -> select prompt context (`list`/`filter-list` with N: one chunk per project, up to N; `list` without N: wider retrieve, one chunk per project; `filter-list`/`count` without N: one chunk per distinct `source` in the retrieve window; catalog and broad-experience questions that name an organization keep only matching `organization`; broad experience: one chunk per `source` unless a retrieved project is named; broad production questions keep only `environment: production`) -> `answer-prompt-v8.md` (`{{question}}` original text, `{{context}}` English chunks with Organization/Environment/Technologies/Links, `{{answer_language_instruction}}`, `{{tech_list_instruction}}` union vs intersection) -> `LlmClientFactory` / `FallbackLlmClient` -> answer in the requested language + GitHub source URLs
 
 Eval (console):
 
 question -> same intent, retrieval limit, and `PromptContextSelector` as the API -> print all ranked hits -> `AnswerPromptFormatter` fills `answer-prompt-v8.md` (no required LLM call). English locale only (no `nb` query translation).
 
-Intended retrieval (knowledge doc + console): top **10** from the store, top **5** as LLM context. API default is retrieve **25** then **10** chunks. For `list` or `filter-list` with a requested N, retrieve `max(50, n*8)` (cap 100), one chunk per project (prefer `overview`), take up to N. For `filter-list` or `count` without N, retrieve 25 and send one chunk per distinct `source` in that window. Broad experience questions (`have you used`, `what experience`) retrieve `max(50, 10*8)` (cap 100), then send one chunk per `source` (up to 10) unless the question names a retrieved project, in which case the default 10 chunks are kept. Broad production questions (`in production`, `production experience`, `i produksjon`, `produksjonserfaring`) then keep only chunks whose frontmatter `environment` is `production`. Similarity scores are for ranking only, not probabilities or a cutoff (manual tests often land around 0.58?0.82).
+Intended retrieval (knowledge doc + console): top **10** from the store, top **5** as LLM context. API default is retrieve **25** then **10** chunks. For `list` or `filter-list` with a requested N, retrieve `max(50, n*8)` (cap 100), one chunk per project (prefer `overview`), take up to N. For `list` without N (`what projects`, `which projects`, `hvilke/hva slags prosjekter`), retrieve `max(50, 10*8)` (cap 100) and send one chunk per `source`. For `filter-list` or `count` without N, retrieve 25 and send one chunk per distinct `source` in that window. If the question names an organization that appears in retrieved frontmatter (suffixes like `AS` stripped), keep only those projects. Broad experience questions (`have you used`, `what experience`) retrieve `max(50, 10*8)` (cap 100), then send one chunk per `source` (up to 10) unless the question names a retrieved project, in which case the default 10 chunks are kept. Broad production questions (`in production`, `production experience`, `i produksjon`, `produksjonserfaring`) then keep only chunks whose frontmatter `environment` is `production`. Similarity scores are for ranking only, not probabilities or a cutoff (manual tests often land around 0.58?0.82).
 
 ---
 
@@ -105,13 +105,13 @@ src/frontend                     Vite + React + TypeScript + Tailwind chat UI
 
 | File | Role |
 |---|---|
-| `Knowledge/KnowledgeRetrievalService.cs` | Query embed -> vector search -> score -> rank |
+| `Knowledge/KnowledgeRetrievalService.cs` | Query embed -> vector search -> score -> rank. Catalog/broad-experience questions merge overview chunks whose `organization` matches a query token so named companies are not dropped by the ANN limit. |
 | `Knowledge/IKnowledgeRetrievalService.cs` | Retrieval contract |
 | `Knowledge/KnowledgeRetrievalResult.cs` | Ranked items (source, heading, semantic type, content, scores) |
-| `Questions/QuestionService.cs` | Orchestrates retrieve / prompt / LLM / source URLs. Rule-based `QuestionIntentDetector` runs on the original question. `list`/`filter-list` with N uses a wider retrieve window; `filter-list`/`count` without N keep the 25-hit window; catalog intents send one chunk per project. |
-| `Questions/QuestionIntentDetector.cs` | Keyword intent: `detail`, `list`, `count`, `filter-list`, plus optional `requestedCount` |
+| `Questions/QuestionService.cs` | Orchestrates retrieve / prompt / LLM / source URLs. Rule-based `QuestionIntentDetector` runs on the original question. `list`/`filter-list` with N uses a wider retrieve window; `list` without N also uses that wider window; `filter-list`/`count` without N keep the 25-hit window; catalog intents send one chunk per project. |
+| `Questions/QuestionIntentDetector.cs` | Keyword intent: `detail`, `list` (`what`/`which` projects), `count`, `filter-list`, plus optional `requestedCount` |
 | `Questions/AnswerPromptFormatter.cs` | Shared LLM context/prompt fill used by API and CandidateConsoleAssistant. Context includes Organization, Environment, Technologies, and http(s) Links as ready Markdown (GitHub/live/portfolio). |
-| `Questions/PromptContextSelector.cs` | Default retrieve 25 / top-10 chunks for focused detail. Broad "have you used / what experience" retrieves 80 (cap 100), then one chunk per `source` (up to 10). `list`/`filter-list`+N: wider retrieve, one chunk per `source`, take N; `filter-list`/`count` without N: one chunk per `source` in the 25-hit window. Broad "what experience" + `and`/`og` is a tech union in the answer prompt; `both`/`bÃ¥de`/`have you used A and B` is an intersection |
+| `Questions/PromptContextSelector.cs` | Default retrieve 25 / top-10 chunks for focused detail. Broad "have you used / what experience" retrieves 80 (cap 100), then one chunk per `source` (up to 10). `list` without N: same 80 retrieve, one chunk per `source`. `list`/`filter-list`+N: wider retrieve, one chunk per `source`, take N; `filter-list`/`count` without N: one chunk per `source` in the 25-hit window. Named organization in the question keeps matching `organization` metadata. Broad "what experience" + `and`/`og` is a tech union in the answer prompt; `both`/`både`/`have you used A and B` is an intersection |
 | `Questions/IQuestionService.cs` | Ask contract |
 | `Questions/AskQuestionRequest.cs` / `AskQuestionResponse.cs` | API DTOs (`Locale` is `us` or `nb`; response includes `intent`) |
 | `Questions/QuestionLocale.cs` | Locale normalize, query-translation flag, answer-language instruction |
@@ -124,7 +124,7 @@ src/frontend                     Vite + React + TypeScript + Tailwind chat UI
 
 Documents: `MarkdownDocumentLoader` (recursive `*.md`, skip `_template_project.md`), `FrontmatterParser`, `ParsedMarkdown`, `MarkdownDocument`, `DocumentChunker` (ATX headings, nested `HeadingPath`, heading stripped from content), `SemanticTypeResolver`, `DocumentChunk`.
 
-Embeddings: `EmbeddingService` (Ollama `/api/embed` from **env vars**, not the JSON `Embeddings` section), `VectorStore` (upsert on `id`; cosine `1 - (embedding <=> q)`), `SearchResult`.
+Embeddings: `EmbeddingService` (Ollama `/api/embed` from **env vars**, not the JSON `Embeddings` section), `VectorStore` (upsert on `id`; cosine `1 - (embedding <=> q)`; catalog questions also load `overview` chunks whose `organization` contains a query token), `SearchResult`.
 
 Scoring: `MetadataEvidenceScorer` (term overlap on metadata + content -> combined score). `IReranker` / `RerankResult` exist; retrieval uses the scorer, not a cross-encoder. Stronger metadata filtering and hybrid/lexical search are still future work.
 
@@ -187,7 +187,7 @@ GitHub source URLs: `GitHub:Owner`, `Repository`, `Branch`, `ProjectsFolder`. `Q
 ## Pitfalls and gaps
 
 - Layers: Api host, Application orchestration, Infrastructure I/O. Console tools are not the REST host.
-- API default retrieve-25 / prompt-10. `list`/`filter-list` with N and `filter-list`/`count` without N diversify by `source`. Broad production questions filter on `environment`. They do not yet filter on period or `technologies`.
+- API default retrieve-25 / prompt-10. `list` without N, `list`/`filter-list` with N, and `filter-list`/`count` without N diversify by `source`. Catalog and broad-experience questions that name an organization keep matching `organization`. Broad production questions filter on `environment`. They do not yet filter on period or `technologies`.
 - `locale: nb` adds an extra LLM call before retrieval. Chunks stay English. UI code `us` is not ISO 639 (`en`).
 - Console eval still uses English questions and the English answer-language instruction.
 - Indexer upserts only; wipe the table or Docker volume for a true rebuild after deletes/renames.

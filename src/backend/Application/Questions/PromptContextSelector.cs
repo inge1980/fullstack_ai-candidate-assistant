@@ -34,6 +34,10 @@ public static class PromptContextSelector
         "\\bboth\\b|\\btogether\\b|\\bin the same project\\b|\\bthe same project\\b|\\bsame project\\b|\\bb\\u00e5de\\b|\\bsamme prosjekt\\b|\\bi samme prosjekt\\b|\\bhave you (?:ever )?(?:used|built|worked).{0,80}\\bwith\\b|\\bhar du (?:brukt|jobbet).{0,80}\\bmed\\b",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
+    private static readonly Regex OrganizationLegalSuffixRegex = new(
+        @"\b(?:as|ab|asa|llc|inc|ltd|gmbh)\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
     public static bool IsFilterList(QuestionIntent intent)
     {
         return string.Equals(
@@ -73,6 +77,16 @@ public static class PromptContextSelector
         return IsFilterListWithCount(intent) || IsListWithCount(intent);
     }
 
+    public static bool IncludeMatchingOrganizationOverviews(
+        QuestionIntent intent,
+        string? question)
+    {
+        return IsList(intent)
+            || IsFilterList(intent)
+            || IsCount(intent)
+            || IsBroadExperienceQuestion(question);
+    }
+
     public static int RetrievalLimit(QuestionIntent intent)
     {
         return RetrievalLimit(intent, question: null);
@@ -89,6 +103,17 @@ public static class PromptContextSelector
             return Math.Min(
                 FilterListRetrievalCap,
                 Math.Max(50, requested * FilterListChunksPerProject));
+        }
+
+        // Catalog without N: widen so a named organization (e.g. Episteme)
+        // is not dropped because vector search ranked sibling docs first.
+        if (IsList(intent))
+        {
+            return Math.Min(
+                FilterListRetrievalCap,
+                Math.Max(
+                    50,
+                    DefaultPromptContextLimit * FilterListChunksPerProject));
         }
 
         if (IsBroadExperienceQuestion(question))
@@ -117,20 +142,22 @@ public static class PromptContextSelector
     {
         if (IsTopNList(intent))
         {
-            return UniqueProjects(items)
+            return FilterByMentionedOrganization(question, UniqueProjects(items))
                 .Take(intent.RequestedCount!.Value)
                 .ToList();
         }
 
-        if (IsFilterList(intent) || IsCount(intent))
+        if (IsFilterList(intent) || IsCount(intent) || IsList(intent))
         {
-            return UniqueProjects(items);
+            return FilterByMentionedOrganization(question, UniqueProjects(items));
         }
 
         if (IsBroadExperienceQuestion(question)
             && !RefersToARetrievedProject(question, items))
         {
-            var unique = UniqueProjects(items);
+            var unique = FilterByMentionedOrganization(
+                question,
+                UniqueProjects(items));
 
             if (IsProductionExperienceQuestion(question))
             {
@@ -255,6 +282,64 @@ public static class PromptContextSelector
             .Replace("&", "and")
             .Replace("'", "")
             .Replace(".", " ");
+    }
+
+    private static List<KnowledgeRetrievalItem> FilterByMentionedOrganization(
+        string? question,
+        List<KnowledgeRetrievalItem> items)
+    {
+        if (string.IsNullOrWhiteSpace(question) || items.Count == 0)
+        {
+            return items;
+        }
+
+        var normalizedQuestion = NormalizePhrase(question);
+        var mentioned = items
+            .Select(item => AnswerPromptFormatter.MetadataString(item, "organization"))
+            .Where(organization => !string.IsNullOrWhiteSpace(organization))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Where(organization => QuestionMentionsOrganization(
+                normalizedQuestion,
+                organization))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        if (mentioned.Count == 0)
+        {
+            return items;
+        }
+
+        return items
+            .Where(item => mentioned.Contains(
+                AnswerPromptFormatter.MetadataString(item, "organization")))
+            .ToList();
+    }
+
+    private static bool QuestionMentionsOrganization(
+        string normalizedQuestion,
+        string organization)
+    {
+        var normalizedOrg = NormalizePhrase(organization).Trim();
+        if (normalizedOrg.Length == 0)
+        {
+            return false;
+        }
+
+        if (normalizedQuestion.Contains(normalizedOrg))
+        {
+            return true;
+        }
+
+        var withoutSuffix = OrganizationLegalSuffixRegex
+            .Replace(normalizedOrg, " ")
+            .Trim();
+
+        if (withoutSuffix.Length >= 4
+            && normalizedQuestion.Contains(withoutSuffix))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     private static List<KnowledgeRetrievalItem> UniqueProjects(

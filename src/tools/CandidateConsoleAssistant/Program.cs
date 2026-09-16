@@ -58,7 +58,7 @@ var questions = new[]
     "What decision in what project are you most proud of?",
     //Error: Hallicinates feelings.
 
-    // Tests: Intent. what projects is not a list cue, so this stays detail (retrieve 25, first 10 chunks, not unique-by-source).
+    // Tests: Intent. "what projects" is a list cue; Next.js is a technology filter -> filter-list.
     "What projects involved Next.js?",
     // Lacking answer: "..and a live demo of the Next.js-powered app is available." , but missing the link.
 
@@ -74,11 +74,13 @@ var questions = new[]
     "List the challenges.",
     // Error: Lists challenges for the random top 10 project-chunks that got sent to the LLM.
 
+    // Tests: Catalog + named organization (list, unique-by-source, keep Episteme AS only).
+    "What projects have you done for Episteme?",
 
 
 
 
-    //Tests: Intent. \bwhich\s+projects?\b does not match which of my projects
+    //Tests: Intent. which of my projects is now a list cue.
     //"Which of my projects used SQL Server?",
 
     // Tests: Unsupported-claim refusal (Kubernetes appears only as an eval topic inside the RAG knowledge doc, not as a technology)
@@ -203,7 +205,11 @@ foreach (var question in questions)
     var retrieval =
         await knowledgeRetrievalService.RetrieveAsync(
             query: question,
-            retrievalLimit: retrievalLimit);
+            retrievalLimit: retrievalLimit,
+            includeMatchingOrganizationOverviews:
+                PromptContextSelector.IncludeMatchingOrganizationOverviews(
+                    intent,
+                    question));
 
     Console.WriteLine($"[Retrieval] limit={retrievalLimit} hits={retrieval.Items.Count}");
 

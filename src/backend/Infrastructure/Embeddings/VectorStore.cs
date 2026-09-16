@@ -157,11 +157,81 @@ public class VectorStore
             "limit",
             limit);
 
-        var results =
-            new List<SearchResult>();
+        await using var reader =
+            await cmd.ExecuteReaderAsync();
+
+        return await ReadSearchResultsAsync(reader);
+    }
+
+    public async Task<IReadOnlyList<SearchResult>> SearchOverviewsMatchingOrganizationAsync(
+        float[] embedding,
+        IReadOnlyList<string> organizationTerms)
+    {
+        if (embedding.Length != 384)
+        {
+            throw new ArgumentException(
+                $"Expected a 384-dimensional embedding, but received {embedding.Length} dimensions.",
+                nameof(embedding));
+        }
+
+        var terms = organizationTerms
+            .Where(term => !string.IsNullOrWhiteSpace(term) && term.Length >= 4)
+            .Select(term => term.Trim().ToLowerInvariant())
+            .Distinct()
+            .ToArray();
+
+        if (terms.Length == 0)
+        {
+            return [];
+        }
+
+        await using var db =
+            await _dataSource.OpenConnectionAsync();
+
+        await using var cmd =
+            new NpgsqlCommand(
+                """
+                SELECT
+                    id,
+                    source,
+                    heading_path,
+                    semantic_type,
+                    content,
+                    metadata,
+                    embedding,
+                    1 - (embedding <=> @embedding) AS similarity
+                FROM document_chunks
+                WHERE embedding IS NOT NULL
+                  AND lower(semantic_type) = 'overview'
+                  AND EXISTS (
+                      SELECT 1
+                      FROM unnest(@terms) AS term
+                      WHERE strpos(
+                          lower(coalesce(metadata->>'organization', '')),
+                          term) > 0
+                  );
+                """,
+                db);
+
+        cmd.Parameters.AddWithValue(
+            "embedding",
+            new Vector(embedding));
+
+        cmd.Parameters.AddWithValue(
+            "terms",
+            terms);
 
         await using var reader =
             await cmd.ExecuteReaderAsync();
+
+        return await ReadSearchResultsAsync(reader);
+    }
+
+    private static async Task<List<SearchResult>> ReadSearchResultsAsync(
+        NpgsqlDataReader reader)
+    {
+        var results =
+            new List<SearchResult>();
 
         while (await reader.ReadAsync())
         {

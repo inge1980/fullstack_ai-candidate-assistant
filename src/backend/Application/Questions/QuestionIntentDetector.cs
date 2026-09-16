@@ -18,7 +18,7 @@ public static class QuestionIntentDetector
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     private static readonly Regex ListRegex = new(
-        @"\blist\b|\bliste\b|\btopp?\s+\d+|\brank(?:ed|ing)?\b|\branger(?:e|ing)?\b|\bwhich\s+projects?\b|\bhvilke\s+prosjekter\b",
+        @"\blist\b|\bliste\b|\btopp?\s+\d+|\brank(?:ed|ing)?\b|\branger(?:e|ing)?\b|\b(?:which|what)\s+projects?\b|\bwhich\s+of\s+(?:my|the)\s+projects?\b|\bhvilke\s+prosjekter\b|\bhva\s+(?:slags\s+)?prosjekter\b",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     private static readonly Regex CatalogCueRegex = new(

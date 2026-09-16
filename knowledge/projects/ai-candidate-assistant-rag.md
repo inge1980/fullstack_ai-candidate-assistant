@@ -1402,9 +1402,9 @@ A large fallback chain is not automatically better than a smaller, well-ordered 
 
 ## Retrieval
 
-- Introduce metadata-aware filtering.
+- Introduce metadata-aware filtering. Catalog and broad-experience questions that name an organization now keep retrieved chunks whose frontmatter `organization` matches (legal suffixes such as AS are ignored). Environment filtering for production questions already exists. Period, role, status, and technologies are not filtered yet.
 - Improve metadata-aware ranking by distinguishing descriptive and structured metadata.
-- Introduce metadata intent detection so structured attributes such as environment and organization can be matched explicitly against query intent.
+- Introduce metadata intent detection so remaining structured attributes (period, role, status, technologies) can be matched explicitly against query intent.
 - Improve reranking for queries containing explicit metadata constraints.
 - Compare vector-only retrieval against hybrid retrieval.
 - Add lexical search for exact technologies and identifiers.

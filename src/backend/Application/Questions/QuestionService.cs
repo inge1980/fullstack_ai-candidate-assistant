@@ -65,6 +65,10 @@ public sealed class QuestionService(
             await knowledgeRetrievalService.RetrieveAsync(
                 query: retrievalQuery,
                 retrievalLimit: retrievalLimit,
+                includeMatchingOrganizationOverviews:
+                    PromptContextSelector.IncludeMatchingOrganizationOverviews(
+                        intent,
+                        question),
                 cancellationToken: cancellationToken);
 
         retrievalStopwatch.Stop();

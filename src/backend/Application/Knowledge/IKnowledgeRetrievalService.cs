@@ -8,5 +8,6 @@ public interface IKnowledgeRetrievalService
     Task<KnowledgeRetrievalResult> RetrieveAsync(
         string query,
         int retrievalLimit = 10,
+        bool includeMatchingOrganizationOverviews = false,
         CancellationToken cancellationToken = default);
 }
