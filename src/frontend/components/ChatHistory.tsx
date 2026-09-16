@@ -34,7 +34,7 @@ export function ChatHistory({
   }
 
   return (
-    <aside className="flex w-full shrink-0 flex-col gap-3 md:sticky md:top-8 md:w-64 lg:w-72">
+    <aside className="flex w-full min-w-0 flex-col gap-3 border-b border-line-soft px-4 py-6 md:sticky md:top-0 md:h-screen md:border-b-0 md:border-r md:px-5 md:py-8">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-ink">{t("history.title")}</h2>
         <button

@@ -183,7 +183,7 @@ export function App() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-4 py-8 md:flex-row md:items-start">
+    <div className="flex min-h-screen flex-col md:grid md:grid-cols-[minmax(0,min(30%,500px))_minmax(0,1fr)]">
       <ChatHistory
         items={history}
         activeQuestion={previousQuestion}
@@ -195,7 +195,7 @@ export function App() {
         onClear={handleClearHistory}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col gap-4">
+      <div className="flex min-w-0 w-full flex-col gap-4 px-4 py-8">
         <header className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold text-ink">M.I.N.D</h1>
