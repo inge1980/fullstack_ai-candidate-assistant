@@ -35,7 +35,7 @@ public class QuestionsController(IQuestionService service) : ControllerBase
 
     /// <summary>
     /// Same ask pipeline as POST /api/v1/Questions, with SSE phase events
-    /// (translating, searching, writing, trying-another-model) and one final JSON result.
+    /// (searching, then writing/translating with provider and model) and one JSON result.
     /// </summary>
     [HttpPost("progress")]
     [Produces("text/event-stream")]
@@ -62,10 +62,16 @@ public class QuestionsController(IQuestionService service) : ControllerBase
                 QuestionLocale.Normalize(request.Locale),
                 includeDebug,
                 cancellationToken,
-                onProgress: async (phase, token) =>
-                    await ServerSentEvents.WritePhaseAsync(
+                onProgress: async (progress, token) =>
+                    await ServerSentEvents.WriteJsonAsync(
                         Response,
-                        phase.ToEventCode(),
+                        "phase",
+                        new
+                        {
+                            phase = progress.Phase.ToEventCode(),
+                            provider = progress.Provider,
+                            model = progress.Model
+                        },
                         token));
 
             await ServerSentEvents.WriteJsonAsync(

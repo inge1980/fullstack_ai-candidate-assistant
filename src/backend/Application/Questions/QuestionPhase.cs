@@ -8,6 +8,11 @@ public enum QuestionPhase
     TryingAnotherModel
 }
 
+public sealed record QuestionProgress(
+    QuestionPhase Phase,
+    string? Provider = null,
+    string? Model = null);
+
 public static class QuestionPhaseCodes
 {
     public const string Translating = "translating";

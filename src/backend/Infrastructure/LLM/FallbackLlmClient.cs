@@ -5,16 +5,16 @@ namespace Infrastructure.LLM;
 public sealed class FallbackLlmClient : ILLMClient
 {
     private readonly IReadOnlyList<ILLMClient> _clients;
-    private readonly Func<CancellationToken, Task>? _onTryingAnotherModel;
+    private readonly Func<string, string, CancellationToken, Task>? _onAttempt;
     public string Provider => "Fallback";
     public string Model => "Fallback";
 
     public FallbackLlmClient(
         IEnumerable<ILLMClient> clients,
-        Func<CancellationToken, Task>? onTryingAnotherModel = null)
+        Func<string, string, CancellationToken, Task>? onAttempt = null)
     {
         _clients = clients.ToList();
-        _onTryingAnotherModel = onTryingAnotherModel;
+        _onAttempt = onAttempt;
         if (_clients.Count == 0)
         {
             throw new InvalidOperationException(
@@ -36,6 +36,14 @@ public sealed class FallbackLlmClient : ILLMClient
             {
                 Console.WriteLine($"[LLM] Trying: {client.Provider} / {client.Model}");
 
+                if (_onAttempt is not null)
+                {
+                    await _onAttempt(
+                        client.Provider,
+                        client.Model,
+                        cancellationToken);
+                }
+
                 var result =
                     await client.GenerateAsync(
                         prompt,
@@ -51,12 +59,6 @@ public sealed class FallbackLlmClient : ILLMClient
                 Console.WriteLine($"[LLM] Failed: {client.Provider} / {client.Model} ({stopwatch.ElapsedMilliseconds} ms) Status={ex.StatusCode} Transient={ex.IsTransient}");
                 lastException = ex;
                 Console.WriteLine($"[LLM] Falling back from: {client.Provider} / {client.Model}");
-
-                var hasNext = index < _clients.Count - 1;
-                if (hasNext && _onTryingAnotherModel is not null)
-                {
-                    await _onTryingAnotherModel(cancellationToken);
-                }
             }
         }
 

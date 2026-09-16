@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import type { QuestionPhase } from "../client/types";
+import type { TFunction } from "i18next";
+import { shortModelName, type QuestionProgress } from "../client/types";
 import { AssistantMarkdown } from "./AssistantMarkdown";
 
 export type ChatMessage = {
@@ -13,7 +14,7 @@ export type ChatMessage = {
 type MessageListProps = {
   messages: ChatMessage[];
   isLoading?: boolean;
-  loadingPhase?: QuestionPhase | null;
+  loadingProgress?: QuestionProgress | null;
   isEditingUser?: boolean;
   editValue?: string;
   onEditValueChange?: (value: string) => void;
@@ -23,30 +24,41 @@ type MessageListProps = {
 };
 
 function loadingStatusText(
-  t: (key: string) => string,
-  phase: QuestionPhase | null,
+  t: TFunction,
+  progress: QuestionProgress | null,
 ): string {
-  if (phase === null) {
+  if (progress === null) {
     return t("status.loading");
   }
 
-  switch (phase) {
+  const provider = progress.provider?.trim() ?? "";
+  const model = shortModelName(progress.model);
+  const hasModel = provider.length > 0 && model.length > 0;
+
+  switch (progress.phase) {
     case "translating":
-      return t("status.phases.translating");
+      return hasModel
+        ? t("status.phases.translatingWithModel", { provider, model })
+        : t("status.phases.translating");
     case "searching":
       return t("status.phases.searching");
     case "writing":
-      return t("status.phases.writing");
     case "trying-another-model":
-      return t("status.phases.trying-another-model");
+      return hasModel
+        ? t("status.phases.asking", { provider, model })
+        : t("status.phases.writing");
     default: {
-      const exhaustive: never = phase;
+      const exhaustive: never = progress.phase;
       return exhaustive;
     }
   }
 }
 
-function GeneratingIndicator({ phase }: { phase: QuestionPhase | null }) {
+function GeneratingIndicator({
+  progress,
+}: {
+  progress: QuestionProgress | null;
+}) {
   const { t } = useTranslation();
 
   return (
@@ -78,7 +90,7 @@ function GeneratingIndicator({ phase }: { phase: QuestionPhase | null }) {
             d="M12 2a10 10 0 0 1 10 10h-3a7 7 0 0 0-7-7V2z"
           />
         </svg>
-        <p className="text-sm text-muted">{loadingStatusText(t, phase)}</p>
+        <p className="text-sm text-muted">{loadingStatusText(t, progress)}</p>
       </div>
     </li>
   );
@@ -209,7 +221,7 @@ function UserQuestion({
 export function MessageList({
   messages,
   isLoading = false,
-  loadingPhase = null,
+  loadingProgress = null,
   isEditingUser = false,
   editValue = "",
   onEditValueChange,
@@ -268,7 +280,7 @@ export function MessageList({
           )}
         </li>
       ))}
-      {isLoading ? <GeneratingIndicator phase={loadingPhase} /> : null}
+      {isLoading ? <GeneratingIndicator progress={loadingProgress} /> : null}
     </ul>
   );
 }

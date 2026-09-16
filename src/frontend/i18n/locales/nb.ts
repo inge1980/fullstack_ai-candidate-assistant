@@ -10,7 +10,15 @@ export const nb = {
     send: "Send",
   },
   status: {
-    loading: "Genererer svar?",
+    loading: "Genererer svar...",
+    phases: {
+      translating: "Oversetter spørsmålet...",
+      translatingWithModel: "Oversetter med {{provider}} ({{model}})...",
+      searching: "Søker i prosjektene...",
+      asking: "Spør {{provider}} ({{model}})...",
+      writing: "Skriver svaret...",
+      "trying-another-model": "Prøver en annen modell...",
+    },
     errorFallback: "Noe gikk galt. Prøv igjen.",
     empty:
       "Still et spørsmål om kandidatens prosjekter, teknologier eller valg. Svarene kommer fra API-et, ikke fra nettleseren.",
@@ -34,7 +42,7 @@ export const nb = {
     clearConfirm: "Tøm",
     clearCancel: "Avbryt",
     view: "Vis lagret svar",
-    reask: "Still dette spørsmålet på nytt", 
+    reask: "Still dette spørsmålet på nytt",
   },
   language: {
     englishUs: "English (US)",
@@ -49,4 +57,3 @@ export const nb = {
     switchCancel: "Avbryt",
   },
 };
- 

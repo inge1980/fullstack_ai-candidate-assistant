@@ -3,7 +3,7 @@ import type {
   AskQuestionResponse,
   ProblemDetails,
   QuestionIntent,
-  QuestionPhase,
+  QuestionProgress,
 } from "./types";
 import { isQuestionPhase } from "./types";
 
@@ -20,7 +20,7 @@ export class ApiError extends Error {
 export async function askQuestion(
   question: string,
   locale: AskQuestionRequest["locale"],
-  onPhase?: (phase: QuestionPhase) => void,
+  onPhase?: (progress: QuestionProgress) => void,
 ): Promise<AskQuestionResponse> {
   const body: AskQuestionRequest = { question, locale };
 
@@ -67,7 +67,7 @@ export async function previewQuestionIntent(
 
 async function readQuestionProgress(
   response: Response,
-  onPhase?: (phase: QuestionPhase) => void,
+  onPhase?: (progress: QuestionProgress) => void,
 ): Promise<AskQuestionResponse> {
   if (!response.body) {
     throw new ApiError("Request failed.", response.status);
@@ -90,8 +90,11 @@ async function readQuestionProgress(
     buffer = parsed.rest;
 
     for (const frame of parsed.frames) {
-      if (frame.event === "phase" && isQuestionPhase(frame.data)) {
-        onPhase?.(frame.data);
+      if (frame.event === "phase") {
+        const progress = readPhaseProgress(frame.data);
+        if (progress) {
+          onPhase?.(progress);
+        }
         continue;
       }
 
@@ -148,6 +151,30 @@ function consumeSseFrames(buffer: string): {
   }
 
   return { frames, rest };
+}
+
+function readPhaseProgress(data: string): QuestionProgress | null {
+  try {
+    const payload = JSON.parse(data) as {
+      phase?: string;
+      provider?: string | null;
+      model?: string | null;
+    };
+
+    if (payload.phase && isQuestionPhase(payload.phase)) {
+      return {
+        phase: payload.phase,
+        provider: payload.provider,
+        model: payload.model,
+      };
+    }
+  } catch {
+    if (isQuestionPhase(data)) {
+      return { phase: data };
+    }
+  }
+
+  return null;
 }
 
 function readSseErrorDetail(data: string): string {

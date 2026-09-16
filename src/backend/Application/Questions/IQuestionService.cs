@@ -11,5 +11,5 @@ public interface IQuestionService
         bool includeDebug = false,
         CancellationToken cancellationToken = default,
         IConfiguration configuration = null!,
-        Func<QuestionPhase, CancellationToken, Task>? onProgress = null);
+        Func<QuestionProgress, CancellationToken, Task>? onProgress = null);
 }

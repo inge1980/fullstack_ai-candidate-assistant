@@ -29,7 +29,7 @@ npm install --prefix src/frontend
 npm run dev --prefix src/frontend
 ```
 
-- API: `http://localhost:5179` ? Swagger `/swagger`, `POST /api/v1/Questions`, smoke `GET /api/v1/llm/test`
+- API: `http://localhost:5179` ? Swagger `/swagger`, `POST /api/v1/Questions` (complete JSON), `POST /api/v1/Questions/progress` (SSE phases + one JSON `result`), smoke `GET /api/v1/llm/test`
 - UI: `http://localhost:5173` ? Vite proxies `/api` to `http://localhost:5179` (no CORS on the API)
 - Indexer `knowledgePath` is `cwd/knowledge/projects` ? run from repo root
 - Solution: `fullstack_ai-candidate-assistant.slnx` (.NET 10)
@@ -45,7 +45,7 @@ Ingestion:
 
 Query (API):
 
-`POST /api/v1/Questions` (`question`, `locale` `us`|`nb`) -> if `nb`, LLM-translate the question to English (`query-translate-prompt-v1.md`) -> query embed (English) -> pgvector cosine search -> for catalog/broad-experience questions, merge `overview` chunks whose `organization` contains a query token -> when the question resolves named technology slugs (`Prompts/taxonomy/technology-families.md`), also merge `overview` chunks whose `technologies` jsonb contains those slugs or family members -> `MetadataEvidenceScorer` -> sort by combined score -> select prompt context (`list`/`filter-list` with N: one chunk per project, up to N; `list` without N: wider retrieve, one chunk per project; `filter-list`/`count` without N: one chunk per distinct `source` in the retrieve window; catalog and broad-experience questions that name an organization keep only matching `organization`; broad experience: one chunk per `source` unless a retrieved project is named; broad production questions keep only `environment: production`; named technologies: keep exact `technologies` matches first, do not pad with unrelated sources, and only then add a small related-family fallback when a named slug has no exact hit) -> `answer-prompt-v8.md` (`{{question}}` original text, `{{context}}` English chunks with Organization/Environment/Technologies/Match/Links, `{{answer_language_instruction}}`, `{{tech_list_instruction}}` union vs intersection, `{{tech_match_instruction}}` exact vs related) -> `LlmClientFactory` / `FallbackLlmClient` -> answer in the requested language + GitHub source URLs
+`POST /api/v1/Questions` (`question`, `locale` `us`|`nb`) -> if `nb`, LLM-translate the question to English (`query-translate-prompt-v1.md`) -> query embed (English) -> pgvector cosine search -> for catalog/broad-experience questions, merge `overview` chunks whose `organization` contains a query token -> when the question resolves named technology slugs (`Prompts/taxonomy/technology-families.md`), also merge `overview` chunks whose `technologies` jsonb contains those slugs or family members -> `MetadataEvidenceScorer` -> sort by combined score -> select prompt context (`list`/`filter-list` with N: one chunk per project, up to N; `list` without N: wider retrieve, one chunk per project; `filter-list`/`count` without N: one chunk per distinct `source` in the retrieve window; catalog and broad-experience questions that name an organization keep only matching `organization`; broad experience: one chunk per `source` unless a retrieved project is named; broad production questions keep only `environment: production`; named technologies: keep exact `technologies` matches first, do not pad with unrelated sources, and only then add a small related-family fallback when a named slug has no exact hit) -> `answer-prompt-v8.md` (`{{question}}` original text, `{{context}}` English chunks with Organization/Environment/Technologies/Match/Links, `{{answer_language_instruction}}`, `{{tech_list_instruction}}` union vs intersection, `{{tech_match_instruction}}` exact vs related) -> `LlmClientFactory` / `FallbackLlmClient` -> answer in the requested language + GitHub source URLs. The chat UI calls `POST /api/v1/Questions/progress` instead: SSE `phase` events (`translating` for `nb`, then `searching`, `writing`, and `trying-another-model` on LLM fallback) and one `result` event with the same JSON as `/Questions`.
 
 Eval (console):
 
@@ -93,7 +93,7 @@ src/frontend                     Vite + React + TypeScript + Tailwind chat UI
 | File | Role |
 |---|---|
 | `Program.cs` | DI, Swagger, controllers, static files, 404 fallback |
-| `Controllers/QuestionsController.cs` | `POST /api/v1/Questions` (`includeDebug` adds scores and raw source). `POST /api/v1/Questions/intent` is keyword intent only (no LLM). |
+| `Controllers/QuestionsController.cs` | `POST /api/v1/Questions` (`includeDebug` adds scores and raw source). `POST /api/v1/Questions/progress` is the same ask with SSE status phases, then one JSON result. `POST /api/v1/Questions/intent` is keyword intent only (no LLM). |
 | `Controllers/LlmController.cs` | `GET /api/v1/llm/test` |
 | `Properties/launchSettings.json` | http `5179`, https `7277` |
 | `wwwroot/404.html` | Fallback page |
@@ -109,7 +109,8 @@ src/frontend                     Vite + React + TypeScript + Tailwind chat UI
 | `Knowledge/IKnowledgeRetrievalService.cs` | Retrieval contract |
 | `Knowledge/KnowledgeRetrievalResult.cs` | Ranked items (source, heading, semantic type, content, scores) |
 | `Knowledge/TechnologyCatalog.cs` | Alias/family lookup from `Prompts/taxonomy/technology-families.md` (not indexed, not sent as an LLM template) |
-| `Questions/QuestionService.cs` | Orchestrates retrieve / prompt / LLM / source URLs. Rule-based `QuestionIntentDetector` runs on the original question. `list`/`filter-list` with N uses a wider retrieve window; `list` without N also uses that wider window; `filter-list`/`count` without N keep the 25-hit window; catalog intents send one chunk per project. |
+| `Questions/QuestionService.cs` | Orchestrates retrieve / prompt / LLM / source URLs. Optional `onProgress` reports search, then each LLM attempt with provider/model (`Asking Groq (gpt-oss-120b)`). Rule-based `QuestionIntentDetector` runs on the original question. `list`/`filter-list` with N uses a wider retrieve window; `list` without N also uses that wider window; `filter-list`/`count` without N keep the 25-hit window; catalog intents send one chunk per project. |
+| `Questions/QuestionPhase.cs` | Pipeline status for SSE (`translating`, `searching`, `writing`) plus optional provider/model on LLM attempts |
 | `Questions/QuestionIntentDetector.cs` | Keyword intent: `detail`, `list` (`what`/`which` projects), `count`, `filter-list`, plus optional `requestedCount` |
 | `Questions/AnswerPromptFormatter.cs` | Shared LLM context/prompt fill used by API and CandidateConsoleAssistant. Context includes Organization, Environment, Technologies, Match (exact vs related), and http(s) Links as ready Markdown (GitHub/live/portfolio). |
 | `Questions/PromptContextSelector.cs` | Default retrieve 25 / top-10 chunks for focused detail. Broad "have you used / what experience" retrieves 80 (cap 100), then one chunk per `source` (up to 10). `list` without N: same 80 retrieve, one chunk per `source`. `list`/`filter-list`+N: wider retrieve, one chunk per `source`, take N; `filter-list`/`count` without N: one chunk per `source` in the 25-hit window. Named organization in the question keeps matching `organization` metadata. Named technologies keep exact `technologies` matches and do not pad; missing named slugs may add a small related-family set. Broad "what experience" + `and`/`og` is a tech union in the answer prompt; `both`/`b�de`/`have you used A and B` is an intersection |
@@ -130,7 +131,7 @@ Embeddings: `EmbeddingService` (Ollama `/api/embed` from **env vars**, not the J
 
 Scoring: `MetadataEvidenceScorer` (term overlap on metadata + content -> combined score). `IReranker` / `RerankResult` exist; retrieval uses the scorer, not a cross-encoder. Stronger metadata filtering and hybrid/lexical search are still future work.
 
-LLM: `ILLMClient`, `LlmClientFactory` (flatten providers x models), `FallbackLlmClient` (log try/fail/success, HTTP status, transient flag via `LlmProviderException`). Google class is `GoogleClient` in file `GeminiClient.cs`. Also `GroqClient`, `OpenRouterClient`. `CerebrasClient` exists but is not in the active `appsettings` provider list.
+LLM: `ILLMClient`, `LlmClientFactory` (flatten providers x models), `FallbackLlmClient` (log try/fail/success, HTTP status, transient flag via `LlmProviderException`; reports each attempt to ask progress). Google class is `GoogleClient` in file `GeminiClient.cs`. Also `GroqClient`, `OpenRouterClient`. `CerebrasClient` exists but is not in the active `appsettings` provider list.
 
 Config: `Configuration/AppConfiguration.cs`.
 
@@ -141,7 +142,7 @@ Config: `Configuration/AppConfiguration.cs`.
 
 ### Frontend (`src/frontend`)
 
-Vite + React + TypeScript + Tailwind. Chat UI posts `{ question, locale }` (`us` | `nb`) to `POST /api/v1/Questions` via a Vite proxy (`/api` ? `http://localhost:5179`). While typing, the form previews intent via `POST /api/v1/Questions/intent` (same keyword detector, no LLM). Chrome copy uses `i18next` / `react-i18next`. The header language menu uses `country-flag-icons` (US / NO) plus `sr-only` / `aria-label` names (`English (US)`, `Norsk bokmål`). Locale is stored in `localStorage`. Successful Q&A pairs are stored in `localStorage` (`mind-chat-history`) and listed in a left sidebar (`ChatHistory`) with view-saved-answer and re-ask icon buttons, plus a confirmed clear-history action. Types live in `src/frontend/client/types.ts`; fetch lives in `src/frontend/client/questions.ts`. Assistant answers are rendered with `react-markdown` plus `remark-gfm` (tables, strikethrough, thematic breaks; no raw HTML). Flattened one-line GFM tables are split into rows before parse. Markdown links open in a new tab and show an external-link icon. No CORS on the API. Swagger on `:5179` is unchanged.
+Vite + React + TypeScript + Tailwind. Chat UI posts `{ question, locale }` (`us` | `nb`) to `POST /api/v1/Questions/progress` via a Vite proxy (`/api` ? `http://localhost:5179`) and shows SSE phase copy (search, then `Asking Groq (gpt-oss-120b)` per LLM attempt) until the final JSON `result`. While typing, the form previews intent via `POST /api/v1/Questions/intent` (same keyword detector, no LLM). The complete JSON `POST /api/v1/Questions` stays for Swagger. Chrome copy uses `i18next` / `react-i18next`. The header language menu uses `country-flag-icons` (US / NO) plus `sr-only` / `aria-label` names (`English (US)`, `Norsk bokmål`). Locale is stored in `localStorage`. Successful Q&A pairs are stored in `localStorage` (`mind-chat-history`) and listed in a left sidebar (`ChatHistory`) with view-saved-answer and re-ask icon buttons, plus a confirmed clear-history action. Types live in `src/frontend/client/types.ts`; fetch lives in `src/frontend/client/questions.ts`. Assistant answers are rendered with `react-markdown` plus `remark-gfm` (tables, strikethrough, thematic breaks; no raw HTML). Flattened one-line GFM tables are split into rows before parse. Markdown links open in a new tab and show an external-link icon. No CORS on the API. Swagger on `:5179` is unchanged.
 
 ---
 
@@ -190,7 +191,8 @@ GitHub source URLs: `GitHub:Owner`, `Repository`, `Branch`, `ProjectsFolder`. `Q
 
 - Layers: Api host, Application orchestration, Infrastructure I/O. Console tools are not the REST host.
 - API default retrieve-25 / prompt-10. `list` without N, `list`/`filter-list` with N, and `filter-list`/`count` without N diversify by `source`. Catalog and broad-experience questions that name an organization keep matching `organization`. Broad production questions filter on `environment`. Named technologies (aliases/families in `Prompts/taxonomy/technology-families.md`) filter on `technologies` and may add a labeled related-family fallback when a named slug has no exact hit. They do not yet filter on period.
-- `locale: nb` adds an extra LLM call before retrieval. Chunks stay English. UI code `us` is not ISO 639 (`en`).
+- `locale: nb` adds an extra LLM call before retrieval. Chunks stay English. UI code `us` is not ISO 639 (`en`). Chat loading text tracks SSE phases from `/Questions/progress`.
+- Progress SSE is status only. The API sets `X-Accel-Buffering: no`; the Vite `/api` proxy should not add extra buffering.
 - Console eval still uses English questions and the English answer-language instruction.
 - Indexer upserts only; wipe the table or Docker volume for a true rebuild after deletes/renames.
 - `EmbeddingService` ignores `appsettings.json` `Embeddings` / `Ollama` sections.

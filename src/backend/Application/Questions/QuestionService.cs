@@ -20,7 +20,7 @@ public sealed class QuestionService(
         bool includeDebug = false,
         CancellationToken cancellationToken = default,
         IConfiguration configuration = null!,
-        Func<QuestionPhase, CancellationToken, Task>? onProgress = null)
+        Func<QuestionProgress, CancellationToken, Task>? onProgress = null)
     {
         if (string.IsNullOrWhiteSpace(question))
         {
@@ -35,10 +35,11 @@ public sealed class QuestionService(
         Console.WriteLine(
             $"[Intent] {intent.Category} n={intent.RequestedCount?.ToString() ?? "-"}");
 
+        var llmPhase = QuestionPhase.Writing;
         var client = llmClientFactory.Create(
-            async (token) =>
+            async (provider, model, token) =>
                 await ReportAsync(
-                    QuestionPhase.TryingAnotherModel,
+                    new QuestionProgress(llmPhase, provider, model),
                     onProgress,
                     token));
 
@@ -46,6 +47,8 @@ public sealed class QuestionService(
 
         if (QuestionLocale.RequiresQueryTranslation(locale))
         {
+            llmPhase = QuestionPhase.Translating;
+
             await ReportAsync(
                 QuestionPhase.Translating,
                 onProgress,
@@ -160,10 +163,7 @@ public sealed class QuestionService(
         // 6. Send prompt to the configured LLM
         // --------------------------------------------------------
 
-        await ReportAsync(
-            QuestionPhase.Writing,
-            onProgress,
-            cancellationToken);
+        llmPhase = QuestionPhase.Writing;
 
         var llmStopwatch = Stopwatch.StartNew();
 
@@ -239,9 +239,20 @@ public sealed class QuestionService(
             cancellationToken);
     }
 
-    private static async Task ReportAsync(
+    private static Task ReportAsync(
         QuestionPhase phase,
-        Func<QuestionPhase, CancellationToken, Task>? onProgress,
+        Func<QuestionProgress, CancellationToken, Task>? onProgress,
+        CancellationToken cancellationToken)
+    {
+        return ReportAsync(
+            new QuestionProgress(phase),
+            onProgress,
+            cancellationToken);
+    }
+
+    private static async Task ReportAsync(
+        QuestionProgress progress,
+        Func<QuestionProgress, CancellationToken, Task>? onProgress,
         CancellationToken cancellationToken)
     {
         if (onProgress is null)
@@ -249,7 +260,7 @@ public sealed class QuestionService(
             return;
         }
 
-        await onProgress(phase, cancellationToken);
+        await onProgress(progress, cancellationToken);
     }
 
     private static async Task<string> TranslateQueryToEnglishAsync(

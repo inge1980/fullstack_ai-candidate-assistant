@@ -13,8 +13,10 @@ export const us = {
     loading: "Generating answer...",
     phases: {
       translating: "Translating the question...",
+      translatingWithModel: "Translating with {{provider}} ({{model}})...",
       searching: "Searching projects...",
       writing: "Writing the answer...",
+      asking: "Asking {{provider}} ({{model}})...",
       "trying-another-model": "Trying another model...",
     },
     errorFallback: "Something went wrong. Try again.",

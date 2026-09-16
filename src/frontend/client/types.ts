@@ -48,8 +48,23 @@ export const questionPhaseCodes = [
 
 export type QuestionPhase = (typeof questionPhaseCodes)[number];
 
+/** Mirrors Application.Questions.QuestionProgress */
+export type QuestionProgress = {
+  phase: QuestionPhase;
+  provider?: string | null;
+  model?: string | null;
+};
+
 export function isQuestionPhase(value: string): value is QuestionPhase {
   return (questionPhaseCodes as readonly string[]).includes(value);
+}
+
+export function shortModelName(model: string | null | undefined): string {
+  if (!model) {
+    return "";
+  }
+
+  return model.replace(/:free$/i, "").split("/").pop() ?? model;
 }
 
 /** ASP.NET Core ProblemDetails (400 validation) */

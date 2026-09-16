@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { askQuestion, previewQuestionIntent } from "./client/questions";
-import type { QuestionIntent, QuestionPhase } from "./client/types";
+import type { QuestionIntent, QuestionProgress } from "./client/types";
 import { formatIntentDebug, QuestionForm } from "./components/QuestionForm";
 import { MessageList, type ChatMessage } from "./components/MessageList";
 import { StatusBanner, type ChatStatus } from "./components/StatusBanner";
@@ -24,7 +24,7 @@ export function App() {
   const [isEditing, setIsEditing] = useState(false);
   const [editDraft, setEditDraft] = useState("");
   const [intent, setIntent] = useState<QuestionIntent | null>(null);
-  const [loadingPhase, setLoadingPhase] = useState<QuestionPhase | null>(null);
+  const [loadingProgress, setLoadingProgress] = useState<QuestionProgress | null>(null);
   const [history, setHistory] = useState<ChatHistoryItem[]>(readChatHistory);
   const askGenerationRef = useRef(0);
   const intentPreviewRef = useRef(0);
@@ -92,16 +92,16 @@ export function App() {
     setEditDraft("");
     setIsEditing(false);
     setErrorMessage(null);
-    setLoadingPhase(null);
+    setLoadingProgress(null);
     setStatus("loading");
 
     try {
-      const response = await askQuestion(trimmed, locale, (phase) => {
+      const response = await askQuestion(trimmed, locale, (progress) => {
         if (generation !== askGenerationRef.current) {
           return;
         }
 
-        setLoadingPhase(phase);
+        setLoadingProgress(progress);
       });
       if (generation !== askGenerationRef.current) {
         return;
@@ -124,7 +124,7 @@ export function App() {
         return next;
       });
       setIntent(response.intent ?? null);
-      setLoadingPhase(null);
+      setLoadingProgress(null);
       setStatus("idle");
     } catch (error) {
       if (generation !== askGenerationRef.current) {
@@ -134,7 +134,7 @@ export function App() {
       const message =
         error instanceof Error ? error.message : t("status.requestFailed");
       setErrorMessage(message);
-      setLoadingPhase(null);
+      setLoadingProgress(null);
       setStatus("error");
     }
   }
@@ -146,7 +146,7 @@ export function App() {
     setIsEditing(false);
     setMessages([]);
     setErrorMessage(null);
-    setLoadingPhase(null);
+    setLoadingProgress(null);
     setIntent(null);
     intentPreviewRef.current += 1;
     setStatus("empty");
@@ -158,7 +158,7 @@ export function App() {
     setEditDraft("");
     setIsEditing(false);
     setErrorMessage(null);
-    setLoadingPhase(null);
+    setLoadingProgress(null);
     setIntent(null);
     intentPreviewRef.current += 1;
     setStatus("idle");
@@ -213,7 +213,7 @@ export function App() {
         <MessageList
           messages={messages}
           isLoading={isLoading}
-          loadingPhase={loadingPhase}
+          loadingProgress={loadingProgress}
           isEditingUser={isEditing}
           editValue={editDraft}
           onEditValueChange={setEditDraft}

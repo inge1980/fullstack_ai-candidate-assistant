@@ -20,7 +20,7 @@ public class LlmClientFactory
     }
 
     public ILLMClient Create(
-        Func<CancellationToken, Task>? onTryingAnotherModel = null)
+        Func<string, string, CancellationToken, Task>? onAttempt = null)
     {
         var clients = new List<ILLMClient>();
 
@@ -51,7 +51,7 @@ public class LlmClientFactory
                 "No LLM providers or models are configured.");
         }
 
-        return new FallbackLlmClient(clients, onTryingAnotherModel);
+        return new FallbackLlmClient(clients, onAttempt);
     }
 
     private ILLMClient CreateClient(
