@@ -58,10 +58,6 @@ var questions = new[]
     "What decision in what project are you most proud of?",
     //Error: Hallicinates feelings.
 
-    // Tests: Intent. "what projects" is a list cue; Next.js is a technology filter -> filter-list.
-    "What projects involved Next.js?",
-    // Lacking answer: "..and a live demo of the Next.js-powered app is available." , but missing the link.
-
     // Tests: Union (what experience + and)
     "What experience do I have with SQL Server and MySQL?",
     // Lacking answer: ERP, PIM, Canteen, GDPR, but missing Bootstrap migration (did not make it to top 10)
@@ -74,11 +70,17 @@ var questions = new[]
     "List the challenges.",
     // Error: Lists challenges for the random top 10 project-chunks that got sent to the LLM.
 
+
+
+
+    // Tests: Intent. "what projects" is a list cue; Next.js is a technology filter -> filter-list.
+    //"What projects involved Next.js?",
+
     // Tests: Catalog + named organization (list, unique-by-source, keep Episteme AS only).
-    "What projects have you done for Episteme?",
+    //"What projects have you done for Episteme?",
 
-
-
+    // Tests: Union of multiple companies
+    //"What projects have you done for Episteme and Moava?",
 
     //Tests: Intent. which of my projects is now a list cue.
     //"Which of my projects used SQL Server?",

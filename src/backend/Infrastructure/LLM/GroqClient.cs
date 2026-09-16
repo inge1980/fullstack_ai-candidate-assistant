@@ -78,7 +78,8 @@ public class GroqClient : ILLMClient
                         }
                     },
                     max_tokens = _options.MaxOutputTokens,
-                    reasoning_effort = _options.ReasoningEffort
+                    reasoning_effort = _options.ReasoningEffort,
+                    include_reasoning = false
                 });
 
         var stopwatch = Stopwatch.StartNew();
