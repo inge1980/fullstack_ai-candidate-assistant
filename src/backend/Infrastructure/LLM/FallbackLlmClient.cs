@@ -5,13 +5,16 @@ namespace Infrastructure.LLM;
 public sealed class FallbackLlmClient : ILLMClient
 {
     private readonly IReadOnlyList<ILLMClient> _clients;
+    private readonly Func<CancellationToken, Task>? _onTryingAnotherModel;
     public string Provider => "Fallback";
     public string Model => "Fallback";
 
     public FallbackLlmClient(
-        IEnumerable<ILLMClient> clients)
+        IEnumerable<ILLMClient> clients,
+        Func<CancellationToken, Task>? onTryingAnotherModel = null)
     {
         _clients = clients.ToList();
+        _onTryingAnotherModel = onTryingAnotherModel;
         if (_clients.Count == 0)
         {
             throw new InvalidOperationException(
@@ -25,8 +28,9 @@ public sealed class FallbackLlmClient : ILLMClient
     {
         Exception? lastException = null;
 
-        foreach (var client in _clients)
+        for (var index = 0; index < _clients.Count; index++)
         {
+            var client = _clients[index];
             var stopwatch = Stopwatch.StartNew();
             try
             {
@@ -46,12 +50,13 @@ public sealed class FallbackLlmClient : ILLMClient
                 stopwatch.Stop();
                 Console.WriteLine($"[LLM] Failed: {client.Provider} / {client.Model} ({stopwatch.ElapsedMilliseconds} ms) Status={ex.StatusCode} Transient={ex.IsTransient}");
                 lastException = ex;
-                if (!ex.IsTransient)
-                {
-                    Console.WriteLine($"[LLM] Falling back from: {client.Provider} / {client.Model}");
-                    continue;
-                }
                 Console.WriteLine($"[LLM] Falling back from: {client.Provider} / {client.Model}");
+
+                var hasNext = index < _clients.Count - 1;
+                if (hasNext && _onTryingAnotherModel is not null)
+                {
+                    await _onTryingAnotherModel(cancellationToken);
+                }
             }
         }
 

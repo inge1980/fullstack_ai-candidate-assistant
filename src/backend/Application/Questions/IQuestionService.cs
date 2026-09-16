@@ -10,5 +10,6 @@ public interface IQuestionService
         string locale = QuestionLocale.Us,
         bool includeDebug = false,
         CancellationToken cancellationToken = default,
-        IConfiguration configuration = null!);
+        IConfiguration configuration = null!,
+        Func<QuestionPhase, CancellationToken, Task>? onProgress = null);
 }

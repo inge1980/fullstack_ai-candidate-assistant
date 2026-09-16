@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { askQuestion, previewQuestionIntent } from "./client/questions";
-import type { QuestionIntent } from "./client/types";
+import type { QuestionIntent, QuestionPhase } from "./client/types";
 import { formatIntentDebug, QuestionForm } from "./components/QuestionForm";
 import { MessageList, type ChatMessage } from "./components/MessageList";
 import { StatusBanner, type ChatStatus } from "./components/StatusBanner";
@@ -24,6 +24,7 @@ export function App() {
   const [isEditing, setIsEditing] = useState(false);
   const [editDraft, setEditDraft] = useState("");
   const [intent, setIntent] = useState<QuestionIntent | null>(null);
+  const [loadingPhase, setLoadingPhase] = useState<QuestionPhase | null>(null);
   const [history, setHistory] = useState<ChatHistoryItem[]>(readChatHistory);
   const askGenerationRef = useRef(0);
   const intentPreviewRef = useRef(0);
@@ -91,10 +92,17 @@ export function App() {
     setEditDraft("");
     setIsEditing(false);
     setErrorMessage(null);
+    setLoadingPhase(null);
     setStatus("loading");
 
     try {
-      const response = await askQuestion(trimmed, locale);
+      const response = await askQuestion(trimmed, locale, (phase) => {
+        if (generation !== askGenerationRef.current) {
+          return;
+        }
+
+        setLoadingPhase(phase);
+      });
       if (generation !== askGenerationRef.current) {
         return;
       }
@@ -116,6 +124,7 @@ export function App() {
         return next;
       });
       setIntent(response.intent ?? null);
+      setLoadingPhase(null);
       setStatus("idle");
     } catch (error) {
       if (generation !== askGenerationRef.current) {
@@ -125,6 +134,7 @@ export function App() {
       const message =
         error instanceof Error ? error.message : t("status.requestFailed");
       setErrorMessage(message);
+      setLoadingPhase(null);
       setStatus("error");
     }
   }
@@ -136,6 +146,7 @@ export function App() {
     setIsEditing(false);
     setMessages([]);
     setErrorMessage(null);
+    setLoadingPhase(null);
     setIntent(null);
     intentPreviewRef.current += 1;
     setStatus("empty");
@@ -147,6 +158,7 @@ export function App() {
     setEditDraft("");
     setIsEditing(false);
     setErrorMessage(null);
+    setLoadingPhase(null);
     setIntent(null);
     intentPreviewRef.current += 1;
     setStatus("idle");
@@ -201,6 +213,7 @@ export function App() {
         <MessageList
           messages={messages}
           isLoading={isLoading}
+          loadingPhase={loadingPhase}
           isEditingUser={isEditing}
           editValue={editDraft}
           onEditValueChange={setEditDraft}

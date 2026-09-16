@@ -19,7 +19,8 @@ public sealed class QuestionService(
         string locale = QuestionLocale.Us,
         bool includeDebug = false,
         CancellationToken cancellationToken = default,
-        IConfiguration configuration = null!)
+        IConfiguration configuration = null!,
+        Func<QuestionPhase, CancellationToken, Task>? onProgress = null)
     {
         if (string.IsNullOrWhiteSpace(question))
         {
@@ -34,12 +35,22 @@ public sealed class QuestionService(
         Console.WriteLine(
             $"[Intent] {intent.Category} n={intent.RequestedCount?.ToString() ?? "-"}");
 
-        var client = llmClientFactory.Create();
+        var client = llmClientFactory.Create(
+            async (token) =>
+                await ReportAsync(
+                    QuestionPhase.TryingAnotherModel,
+                    onProgress,
+                    token));
 
         var retrievalQuery = question;
 
         if (QuestionLocale.RequiresQueryTranslation(locale))
         {
+            await ReportAsync(
+                QuestionPhase.Translating,
+                onProgress,
+                cancellationToken);
+
             var translationStopwatch = Stopwatch.StartNew();
 
             retrievalQuery =
@@ -55,6 +66,11 @@ public sealed class QuestionService(
         // --------------------------------------------------------
         // 1. Retrieve and rank knowledge
         // --------------------------------------------------------
+
+        await ReportAsync(
+            QuestionPhase.Searching,
+            onProgress,
+            cancellationToken);
 
         var retrievalStopwatch = Stopwatch.StartNew();
 
@@ -144,6 +160,11 @@ public sealed class QuestionService(
         // 6. Send prompt to the configured LLM
         // --------------------------------------------------------
 
+        await ReportAsync(
+            QuestionPhase.Writing,
+            onProgress,
+            cancellationToken);
+
         var llmStopwatch = Stopwatch.StartNew();
 
         var answer =
@@ -216,6 +237,19 @@ public sealed class QuestionService(
         return await File.ReadAllTextAsync(
             promptPath,
             cancellationToken);
+    }
+
+    private static async Task ReportAsync(
+        QuestionPhase phase,
+        Func<QuestionPhase, CancellationToken, Task>? onProgress,
+        CancellationToken cancellationToken)
+    {
+        if (onProgress is null)
+        {
+            return;
+        }
+
+        await onProgress(phase, cancellationToken);
     }
 
     private static async Task<string> TranslateQueryToEnglishAsync(

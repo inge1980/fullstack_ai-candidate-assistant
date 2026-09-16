@@ -19,7 +19,8 @@ public class LlmClientFactory
         _httpClientFactory = httpClientFactory;
     }
 
-    public ILLMClient Create()
+    public ILLMClient Create(
+        Func<CancellationToken, Task>? onTryingAnotherModel = null)
     {
         var clients = new List<ILLMClient>();
 
@@ -50,7 +51,7 @@ public class LlmClientFactory
                 "No LLM providers or models are configured.");
         }
 
-        return new FallbackLlmClient(clients);
+        return new FallbackLlmClient(clients, onTryingAnotherModel);
     }
 
     private ILLMClient CreateClient(

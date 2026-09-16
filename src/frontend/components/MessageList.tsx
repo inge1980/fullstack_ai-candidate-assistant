@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import type { QuestionPhase } from "../client/types";
 import { AssistantMarkdown } from "./AssistantMarkdown";
 
 export type ChatMessage = {
@@ -12,6 +13,7 @@ export type ChatMessage = {
 type MessageListProps = {
   messages: ChatMessage[];
   isLoading?: boolean;
+  loadingPhase?: QuestionPhase | null;
   isEditingUser?: boolean;
   editValue?: string;
   onEditValueChange?: (value: string) => void;
@@ -20,7 +22,31 @@ type MessageListProps = {
   onResend?: () => void;
 };
 
-function GeneratingIndicator() {
+function loadingStatusText(
+  t: (key: string) => string,
+  phase: QuestionPhase | null,
+): string {
+  if (phase === null) {
+    return t("status.loading");
+  }
+
+  switch (phase) {
+    case "translating":
+      return t("status.phases.translating");
+    case "searching":
+      return t("status.phases.searching");
+    case "writing":
+      return t("status.phases.writing");
+    case "trying-another-model":
+      return t("status.phases.trying-another-model");
+    default: {
+      const exhaustive: never = phase;
+      return exhaustive;
+    }
+  }
+}
+
+function GeneratingIndicator({ phase }: { phase: QuestionPhase | null }) {
   const { t } = useTranslation();
 
   return (
@@ -52,7 +78,7 @@ function GeneratingIndicator() {
             d="M12 2a10 10 0 0 1 10 10h-3a7 7 0 0 0-7-7V2z"
           />
         </svg>
-        <p className="text-sm text-muted">{t("status.loading")}</p>
+        <p className="text-sm text-muted">{loadingStatusText(t, phase)}</p>
       </div>
     </li>
   );
@@ -183,6 +209,7 @@ function UserQuestion({
 export function MessageList({
   messages,
   isLoading = false,
+  loadingPhase = null,
   isEditingUser = false,
   editValue = "",
   onEditValueChange,
@@ -241,7 +268,7 @@ export function MessageList({
           )}
         </li>
       ))}
-      {isLoading ? <GeneratingIndicator /> : null}
+      {isLoading ? <GeneratingIndicator phase={loadingPhase} /> : null}
     </ul>
   );
 }

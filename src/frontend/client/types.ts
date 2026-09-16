@@ -38,6 +38,20 @@ export type AskQuestionResponse = {
   intent?: QuestionIntent | null;
 };
 
+/** Mirrors Application.Questions.QuestionPhaseCodes */
+export const questionPhaseCodes = [
+  "translating",
+  "searching",
+  "writing",
+  "trying-another-model",
+] as const;
+
+export type QuestionPhase = (typeof questionPhaseCodes)[number];
+
+export function isQuestionPhase(value: string): value is QuestionPhase {
+  return (questionPhaseCodes as readonly string[]).includes(value);
+}
+
 /** ASP.NET Core ProblemDetails (400 validation) */
 export type ProblemDetails = {
   title?: string;

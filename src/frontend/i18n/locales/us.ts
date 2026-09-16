@@ -11,6 +11,12 @@ export const us = {
   },
   status: {
     loading: "Generating answer...",
+    phases: {
+      translating: "Translating the question...",
+      searching: "Searching projects...",
+      writing: "Writing the answer...",
+      "trying-another-model": "Trying another model...",
+    },
     errorFallback: "Something went wrong. Try again.",
     empty:
       "Ask a question about the candidate's projects, technologies, or decisions. Answers come from the existing API, not from the browser.",
