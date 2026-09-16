@@ -73,6 +73,10 @@ Treat the list as an intersection when the question uses language such as both, 
 
 {{tech_list_instruction}}
 
+{{tech_match_instruction}}
+
+Chunks may include a Match line. exact means that project's Technologies field lists a named technology from the question. related means the chunk is family-similar only: do not say the missing named technology was used. If Match is related, say the named technology is not in the project record, then mention the related work.
+
 Treat Organization and Environment as the source of truth for school vs personal vs company work, and for production vs development. Do not infer school, personal, or production from prose such as live data, customer data, or production-like environments when those fields say otherwise.
 
 Do not infer an environment, level of usage, ownership, seniority, or production experience unless the retrieved context explicitly supports that claim.

@@ -127,6 +127,8 @@ At query time, a natural-language question is converted into an embedding using 
 
 The LLM is responsible for interpreting and synthesizing the retrieved evidence, while the retrieval system is responsible for determining which documented project experience is relevant.
 
+When a question names technologies, retrieval also merges overview chunks whose frontmatter `technologies` match resolved slugs or declared family members from the application taxonomy. Prompt context then prefers exact technology matches and only adds related-family projects when a named technology has no exact hit, labeled as related rather than used.
+
 This separation is important because a semantically plausible answer is not necessarily a supported answer. For example, evidence that a technology was used in a project does not automatically establish that it was used in production. The answer-generation instructions therefore explicitly require the model to distinguish documented evidence from unsupported inference.
 
 The project also treats LLM providers as replaceable infrastructure rather than coupling the application to a single model or provider. Multiple models can be configured per provider, and the system can fall back sequentially across models and providers when failures occur.

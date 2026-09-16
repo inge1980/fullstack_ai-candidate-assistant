@@ -61,6 +61,11 @@ public sealed class QuestionService(
         var retrievalLimit =
             PromptContextSelector.RetrievalLimit(intent, question);
 
+        var technologySlugs = PromptContextSelector.TechnologyOverviewSlugs(question)
+            .Concat(PromptContextSelector.TechnologyOverviewSlugs(retrievalQuery))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
         var retrieval =
             await knowledgeRetrievalService.RetrieveAsync(
                 query: retrievalQuery,
@@ -69,6 +74,7 @@ public sealed class QuestionService(
                     PromptContextSelector.IncludeMatchingOrganizationOverviews(
                         intent,
                         question),
+                technologySlugs: technologySlugs,
                 cancellationToken: cancellationToken);
 
         retrievalStopwatch.Stop();
@@ -99,7 +105,7 @@ public sealed class QuestionService(
         var contextBuildStopwatch = Stopwatch.StartNew();
 
         var context =
-            AnswerPromptFormatter.FormatContext(promptResults);
+            AnswerPromptFormatter.FormatContext(promptResults, question);
         
         contextBuildStopwatch.Stop();
         Console.WriteLine($"[Timing] Context build: {contextBuildStopwatch.ElapsedMilliseconds} ms");
@@ -128,7 +134,8 @@ public sealed class QuestionService(
                 promptTemplate,
                 question,
                 context,
-                locale);
+                locale,
+                promptResults);
 
         promptBuildStopwatch.Stop();
         Console.WriteLine($"[Timing] Prompt build: {promptBuildStopwatch.ElapsedMilliseconds} ms");

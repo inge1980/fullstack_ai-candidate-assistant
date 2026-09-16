@@ -227,6 +227,71 @@ public class VectorStore
         return await ReadSearchResultsAsync(reader);
     }
 
+    public async Task<IReadOnlyList<SearchResult>> SearchOverviewsMatchingTechnologiesAsync(
+        float[] embedding,
+        IReadOnlyList<string> technologySlugs)
+    {
+        if (embedding.Length != 384)
+        {
+            throw new ArgumentException(
+                $"Expected a 384-dimensional embedding, but received {embedding.Length} dimensions.",
+                nameof(embedding));
+        }
+
+        var slugs = technologySlugs
+            .Where(slug => !string.IsNullOrWhiteSpace(slug))
+            .Select(slug => slug.Trim().ToLowerInvariant())
+            .Distinct()
+            .ToArray();
+
+        if (slugs.Length == 0)
+        {
+            return [];
+        }
+
+        await using var db =
+            await _dataSource.OpenConnectionAsync();
+
+        await using var cmd =
+            new NpgsqlCommand(
+                """
+                SELECT
+                    id,
+                    source,
+                    heading_path,
+                    semantic_type,
+                    content,
+                    metadata,
+                    embedding,
+                    1 - (embedding <=> @embedding) AS similarity
+                FROM document_chunks
+                WHERE embedding IS NOT NULL
+                  AND lower(semantic_type) = 'overview'
+                  AND jsonb_typeof(COALESCE(metadata->'technologies', '[]'::jsonb)) = 'array'
+                  AND EXISTS (
+                      SELECT 1
+                      FROM jsonb_array_elements_text(
+                          COALESCE(metadata->'technologies', '[]'::jsonb)) AS tech
+                      INNER JOIN unnest(@slugs) AS slug
+                          ON lower(tech) = slug
+                  );
+                """,
+                db);
+
+        cmd.Parameters.AddWithValue(
+            "embedding",
+            new Vector(embedding));
+
+        cmd.Parameters.AddWithValue(
+            "slugs",
+            slugs);
+
+        await using var reader =
+            await cmd.ExecuteReaderAsync();
+
+        return await ReadSearchResultsAsync(reader);
+    }
+
     private static async Task<List<SearchResult>> ReadSearchResultsAsync(
         NpgsqlDataReader reader)
     {

@@ -211,7 +211,9 @@ foreach (var question in questions)
             includeMatchingOrganizationOverviews:
                 PromptContextSelector.IncludeMatchingOrganizationOverviews(
                     intent,
-                    question));
+                    question),
+            technologySlugs:
+                PromptContextSelector.TechnologyOverviewSlugs(question));
 
     Console.WriteLine($"[Retrieval] limit={retrievalLimit} hits={retrieval.Items.Count}");
 
@@ -254,14 +256,15 @@ foreach (var question in questions)
         $"[Context] uniqueSources={retrieval.Items.Select(item => item.Source).Distinct(StringComparer.OrdinalIgnoreCase).Count()} selected={promptResults.Count} projects={string.Join(", ", promptResults.Select(item => AnswerPromptFormatter.ProjectId(item.Source)))}");
 
     var context =
-        AnswerPromptFormatter.FormatContext(promptResults);
+        AnswerPromptFormatter.FormatContext(promptResults, question);
 
     var prompt =
         AnswerPromptFormatter.Fill(
             answerPromptTemplate,
             question,
             context,
-            QuestionLocale.Us);
+            QuestionLocale.Us,
+            promptResults);
 
     Console.WriteLine();
     Console.WriteLine("==============================");

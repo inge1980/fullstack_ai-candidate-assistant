@@ -9,5 +9,6 @@ public interface IKnowledgeRetrievalService
         string query,
         int retrievalLimit = 10,
         bool includeMatchingOrganizationOverviews = false,
+        IReadOnlyList<string>? technologySlugs = null,
         CancellationToken cancellationToken = default);
 }

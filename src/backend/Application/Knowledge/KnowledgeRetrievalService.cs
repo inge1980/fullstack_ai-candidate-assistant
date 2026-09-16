@@ -15,6 +15,7 @@ public sealed class KnowledgeRetrievalService(
         string query,
         int retrievalLimit = 10,
         bool includeMatchingOrganizationOverviews = false,
+        IReadOnlyList<string>? technologySlugs = null,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(query))
@@ -72,6 +73,33 @@ public sealed class KnowledgeRetrievalService(
 
             Console.WriteLine(
                 $"[Timing] Organization overviews: {organizationStopwatch.ElapsedMilliseconds} ms added={added}");
+        }
+
+        if (technologySlugs is { Count: > 0 })
+        {
+            var technologyStopwatch = Stopwatch.StartNew();
+            var technologyHits =
+                await vectorStore.SearchOverviewsMatchingTechnologiesAsync(
+                    embedding,
+                    technologySlugs);
+            technologyStopwatch.Stop();
+
+            var existingIds = results
+                .Select(result => result.Chunk.Id)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var added = 0;
+
+            foreach (var hit in technologyHits)
+            {
+                if (existingIds.Add(hit.Chunk.Id))
+                {
+                    results.Add(hit);
+                    added++;
+                }
+            }
+
+            Console.WriteLine(
+                $"[Timing] Technology overviews: {technologyStopwatch.ElapsedMilliseconds} ms added={added}");
         }
 
         foreach (var result in results)

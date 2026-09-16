@@ -6,8 +6,11 @@ namespace Application.Questions;
 public static class AnswerPromptFormatter
 {
     public static string FormatContext(
-        IReadOnlyList<KnowledgeRetrievalItem> items)
+        IReadOnlyList<KnowledgeRetrievalItem> items,
+        string? question = null)
     {
+        var named = TechnologyCatalog.ResolveNamed(question);
+
         return string.Join(
             "\n\n",
             items.Select(
@@ -17,6 +20,7 @@ public static class AnswerPromptFormatter
                     $"Organization: {MetadataString(result, "organization")}\n" +
                     $"Environment: {MetadataString(result, "environment")}\n" +
                     $"Technologies: {ProjectTechnologies(result)}\n" +
+                    TechnologyCatalog.FormatMatchLine(result, named) +
                     LinksLine(result) +
                     $"Heading: {result.Heading}\n" +
                     $"Semantic Type: {result.SemanticType}\n" +
@@ -27,7 +31,8 @@ public static class AnswerPromptFormatter
         string template,
         string question,
         string context,
-        string locale)
+        string locale,
+        IReadOnlyList<KnowledgeRetrievalItem>? promptItems = null)
     {
         return template
             .Replace("{{question}}", question)
@@ -37,7 +42,10 @@ public static class AnswerPromptFormatter
                 QuestionLocale.AnswerLanguageInstruction(locale))
             .Replace(
                 "{{tech_list_instruction}}",
-                PromptContextSelector.TechListInstruction(question));
+                PromptContextSelector.TechListInstruction(question))
+            .Replace(
+                "{{tech_match_instruction}}",
+                TechnologyCatalog.MatchInstruction(question, promptItems));
     }
 
     public static string ProjectId(string source)

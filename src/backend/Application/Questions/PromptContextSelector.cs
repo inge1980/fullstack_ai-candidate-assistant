@@ -87,6 +87,13 @@ public static class PromptContextSelector
             || IsBroadExperienceQuestion(question);
     }
 
+    public static IReadOnlyList<string> TechnologyOverviewSlugs(
+        string? question)
+    {
+        return TechnologyCatalog.SlugsToMerge(
+            TechnologyCatalog.ResolveNamed(question));
+    }
+
     public static int RetrievalLimit(QuestionIntent intent)
     {
         return RetrievalLimit(intent, question: null);
@@ -142,14 +149,22 @@ public static class PromptContextSelector
     {
         if (IsTopNList(intent))
         {
-            return FilterByMentionedOrganization(question, UniqueProjects(items))
+            var selected = ApplyNamedTechnologySelection(
+                question,
+                items,
+                FilterByMentionedOrganization(question, UniqueProjects(items)));
+
+            return selected
                 .Take(intent.RequestedCount!.Value)
                 .ToList();
         }
 
         if (IsFilterList(intent) || IsCount(intent) || IsList(intent))
         {
-            return FilterByMentionedOrganization(question, UniqueProjects(items));
+            return ApplyNamedTechnologySelection(
+                question,
+                items,
+                FilterByMentionedOrganization(question, UniqueProjects(items)));
         }
 
         if (IsBroadExperienceQuestion(question)
@@ -166,14 +181,23 @@ public static class PromptContextSelector
                     .ToList();
             }
 
+            unique = ApplyNamedTechnologySelection(question, items, unique);
+
             return unique
                 .Take(DefaultPromptContextLimit)
                 .ToList();
         }
 
-        return items
+        var detail = items
             .Take(DefaultPromptContextLimit)
             .ToList();
+
+        if (!RefersToARetrievedProject(question, items))
+        {
+            detail = ApplyNamedTechnologySelection(question, items, detail);
+        }
+
+        return detail;
     }
 
     public static bool IsBroadExperienceQuestion(string? question)
@@ -229,6 +253,62 @@ public static class PromptContextSelector
         }
 
         return string.Empty;
+    }
+
+    private static List<KnowledgeRetrievalItem> ApplyNamedTechnologySelection(
+        string? question,
+        IReadOnlyList<KnowledgeRetrievalItem> allItems,
+        List<KnowledgeRetrievalItem> selected)
+    {
+        var named = TechnologyCatalog.ResolveNamed(question);
+        if (named.Count == 0 || selected.Count == 0)
+        {
+            return selected;
+        }
+
+        if (RefersToARetrievedProject(question, allItems))
+        {
+            return selected;
+        }
+
+        var exact = IsTechIntersectionQuestion(question)
+            ? selected
+                .Where(item => TechnologyCatalog.ProjectHasEverySlug(item, named))
+                .ToList()
+            : selected
+                .Where(item => TechnologyCatalog.ProjectHasAnySlug(item, named))
+                .ToList();
+
+        var missing = named
+            .Where(slug => !selected.Any(item =>
+                TechnologyCatalog.ProjectHasSlug(item, slug)))
+            .ToList();
+
+        if (missing.Count == 0)
+        {
+            return exact;
+        }
+
+        var relatedSlugs = TechnologyCatalog.SlugsToMerge(missing)
+            .Where(slug => !named.Contains(slug, StringComparer.OrdinalIgnoreCase))
+            .ToList();
+
+        var related = selected
+            .Where(item =>
+                !TechnologyCatalog.ProjectHasAnySlug(item, named)
+                && TechnologyCatalog.ProjectHasAnySlug(item, relatedSlugs))
+            .ToList();
+
+        if (exact.Count == 0)
+        {
+            return related
+                .Take(DefaultPromptContextLimit)
+                .ToList();
+        }
+
+        return exact
+            .Concat(related.Take(TechnologyCatalog.RelatedFillCap))
+            .ToList();
     }
 
     private static bool RefersToARetrievedProject(
