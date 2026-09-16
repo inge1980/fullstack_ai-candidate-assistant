@@ -68,7 +68,11 @@ public class OpenRouterClient : ILLMClient
                         content = prompt
                     }
                 },
-                max_tokens = _options.MaxOutputTokens
+                max_tokens = _options.MaxOutputTokens,
+                reasoning = new
+                {
+                    enabled = false
+                }
             };
 
         using var httpRequest = new HttpRequestMessage(
