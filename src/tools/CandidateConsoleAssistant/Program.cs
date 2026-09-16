@@ -58,10 +58,6 @@ var questions = new[]
     "What decision in what project are you most proud of?",
     //Error: Hallicinates feelings.
 
-    // Tests: Union (what experience + and)
-    "What experience do I have with SQL Server and MySQL?",
-    // Lacking answer: ERP, PIM, Canteen, GDPR, but missing Bootstrap migration (did not make it to top 10)
-
     // Tests: list intent with status
     "Which projects are still active?",
     // Error: Projects with status completed are shown in the answer.
@@ -72,6 +68,9 @@ var questions = new[]
 
 
 
+
+    // Tests: Union (what experience + and)
+    //"What experience do I have with SQL Server and MySQL?",
 
     // Tests: Intent. "what projects" is a list cue; Next.js is a technology filter -> filter-list.
     //"What projects involved Next.js?",
