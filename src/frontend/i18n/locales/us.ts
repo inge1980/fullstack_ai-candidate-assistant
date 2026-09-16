@@ -10,7 +10,7 @@ export const us = {
     send: "Send",
   },
   status: {
-    loading: "Generating answer?",
+    loading: "Generating answer...",
     errorFallback: "Something went wrong. Try again.",
     empty:
       "Ask a question about the candidate's projects, technologies, or decisions. Answers come from the existing API, not from the browser.",
