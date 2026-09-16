@@ -65,62 +65,39 @@ export function ChatHistory({
                     : "border-line-soft bg-surface"
                 }`}
               >
-                <p className="min-w-0 flex-1 truncate text-sm text-ink" title={item.question}>
+                <button
+                  aria-label={t("history.view")}
+                  className="min-w-0 flex-1 cursor-pointer truncate rounded-sm text-left text-sm text-ink underline-offset-2 transition-colors hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:no-underline"
+                  title={item.question}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onView(item)}
+                >
                   {item.question}
-                </p>
-                <div className="flex shrink-0 gap-0.5">
-                  <button
-                    aria-label={t("history.view")}
-                    className="cursor-pointer rounded p-1 text-muted transition-colors hover:bg-surface-muted hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
-                    title={t("history.view")}
-                    type="button"
-                    disabled={disabled}
-                    onClick={() => onView(item)}
+                </button>
+                <button
+                  aria-label={t("history.reask")}
+                  className="shrink-0 cursor-pointer rounded p-1 text-muted transition-colors hover:bg-surface-muted hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+                  title={t("history.reask")}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onReask(item.question)}
+                >
+                  <svg
+                    aria-hidden="true"
+                    className="size-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
                   >
-                    <svg
-                      aria-hidden="true"
-                      className="size-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z"
-                        stroke="currentColor"
-                        strokeWidth="1.75"
-                      />
-                      <circle
-                        cx="12"
-                        cy="12"
-                        r="2.5"
-                        stroke="currentColor"
-                        strokeWidth="1.75"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    aria-label={t("history.reask")}
-                    className="cursor-pointer rounded p-1 text-muted transition-colors hover:bg-surface-muted hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
-                    title={t("history.reask")}
-                    type="button"
-                    disabled={disabled}
-                    onClick={() => onReask(item.question)}
-                  >
-                    <svg
-                      aria-hidden="true"
-                      className="size-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        d="M20 12a8 8 0 1 1-2.2-5.5M20 4v4h-4"
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="1.75"
-                      />
-                    </svg>
-                  </button>
-                </div>
+                    <path
+                      d="M20 12a8 8 0 1 1-2.2-5.5M20 4v4h-4"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="1.75"
+                    />
+                  </svg>
+                </button>
               </li>
             );
           })}
