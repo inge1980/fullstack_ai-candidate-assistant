@@ -47,6 +47,7 @@ export function QuestionForm({
           type="text"
           name="question"
           autoComplete="off"
+          autoFocus
           placeholder={t("form.placeholder")}
           value={value}
           disabled={disabled}
