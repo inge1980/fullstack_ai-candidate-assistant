@@ -160,8 +160,10 @@ Indexed files in `knowledge/projects/`:
 - `hierarchical-shopping-list-app.md`
 - `lost-and-found-api.md`
 - `n8n-social-content-generator.md`
+- `osedalen-org-news-feed.md`
 - `pim-integration.md`
 - `react-hotel-booking-case.md`
+- `sms-joke-archive.md`
 
 Frontmatter (`_template_project.md`): `title`, `organization`, `role`, `environment`, `period`, `status`, `technologies`, `concepts`, `dependencies`, `links`.
 
