@@ -228,6 +228,9 @@ export function App() {
           onResend={() => {
             void ask(editDraft);
           }}
+          onReask={() => {
+            void ask(previousQuestion);
+          }}
         />
 
         {messages.length === 0 ? (

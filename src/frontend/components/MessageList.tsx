@@ -21,6 +21,7 @@ type MessageListProps = {
   onStartEdit?: () => void;
   onCancelEdit?: () => void;
   onResend?: () => void;
+  onReask?: () => void;
 };
 
 function loadingStatusText(
@@ -105,6 +106,7 @@ function UserQuestion({
   onStartEdit,
   onCancelEdit,
   onResend,
+  onReask,
 }: {
   content: string;
   isEditing: boolean;
@@ -114,6 +116,7 @@ function UserQuestion({
   onStartEdit: () => void;
   onCancelEdit: () => void;
   onResend: () => void;
+  onReask: () => void;
 }) {
   const { t } = useTranslation();
   const fieldId = useId();
@@ -140,27 +143,51 @@ function UserQuestion({
           {t("chat.you")}
         </p>
         {canEdit && !isEditing ? (
-          <button
-            aria-label={t("chat.editQuestion")}
-            className="cursor-pointer rounded p-1 text-invert-fg/80 transition-colors hover:bg-invert-fg/15 hover:text-invert-fg"
-            type="button"
-            onClick={onStartEdit}
-          >
-            <svg
-              aria-hidden="true"
-              className="size-4"
-              fill="none"
-              viewBox="0 0 24 24"
+          <div className="flex shrink-0 items-center gap-0.5">
+            <button
+              aria-label={t("chat.editQuestion")}
+              className="cursor-pointer rounded p-1 text-invert-fg/80 transition-colors hover:bg-invert-fg/15 hover:text-invert-fg"
+              type="button"
+              onClick={onStartEdit}
             >
-              <path
-                d="M4 20h4l10.5-10.5a1.5 1.5 0 0 0-2.12-2.12L6 17.76V20zM14.5 6.5l3 3"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="1.75"
-              />
-            </svg>
-          </button>
+              <svg
+                aria-hidden="true"
+                className="size-4"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M4 20h4l10.5-10.5a1.5 1.5 0 0 0-2.12-2.12L6 17.76V20zM14.5 6.5l3 3"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.75"
+                />
+              </svg>
+            </button>
+            <button
+              aria-label={t("app.askSameQuestion")}
+              className="cursor-pointer rounded p-1 text-invert-fg/80 transition-colors hover:bg-invert-fg/15 hover:text-invert-fg"
+              title={t("app.askSameQuestion")}
+              type="button"
+              onClick={onReask}
+            >
+              <svg
+                aria-hidden="true"
+                className="size-4"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M20 12a8 8 0 1 1-2.2-5.5M20 4v4h-4"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.75"
+                />
+              </svg>
+            </button>
+          </div>
         ) : null}
       </div>
       {isEditing ? (
@@ -228,11 +255,13 @@ export function MessageList({
   onStartEdit,
   onCancelEdit,
   onResend,
+  onReask,
 }: MessageListProps) {
   const { t } = useTranslation();
   const canEditUser =
-    Boolean(onStartEdit && onCancelEdit && onResend && onEditValueChange) &&
-    !isLoading;
+    Boolean(
+      onStartEdit && onCancelEdit && onResend && onEditValueChange && onReask,
+    ) && !isLoading;
 
   if (messages.length === 0 && !isLoading) {
     return null;
@@ -259,6 +288,7 @@ export function MessageList({
               onStartEdit={onStartEdit ?? (() => undefined)}
               onCancelEdit={onCancelEdit ?? (() => undefined)}
               onResend={onResend ?? (() => undefined)}
+              onReask={onReask ?? (() => undefined)}
             />
           ) : (
             <>
