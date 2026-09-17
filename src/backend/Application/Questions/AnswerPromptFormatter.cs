@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Application.Knowledge;
 
@@ -18,6 +19,7 @@ public static class AnswerPromptFormatter
                     $"[{index + 1}] {result.Source}\n" +
                     $"Project: {ProjectTitle(result)}\n" +
                     $"Organization: {MetadataString(result, "organization")}\n" +
+                    $"Period: {FormatProjectPeriod(result)}\n" +
                     $"Environment: {MetadataString(result, "environment")}\n" +
                     $"Technologies: {ProjectTechnologies(result)}\n" +
                     TechnologyCatalog.FormatMatchLine(result, named) +
@@ -67,6 +69,66 @@ public static class AnswerPromptFormatter
             MetadataString(result, "environment").Trim(),
             "production",
             StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string FormatProjectPeriod(KnowledgeRetrievalItem result)
+    {
+        if (!result.Metadata.TryGetValue("period", out var value)
+            || value is not JsonElement json
+            || json.ValueKind != JsonValueKind.Object)
+        {
+            return string.Empty;
+        }
+
+        var fromText = json.TryGetProperty("from", out var fromField)
+            ? fromField.GetString()?.Trim()
+            : null;
+        var toText = json.TryGetProperty("to", out var toField)
+            ? toField.GetString()?.Trim()
+            : null;
+        if (string.IsNullOrWhiteSpace(fromText)
+            || string.IsNullOrWhiteSpace(toText))
+        {
+            return string.Empty;
+        }
+
+        var span = $"{fromText} to {toText}";
+        if (!DateTime.TryParseExact(
+                fromText,
+                "yyyy-MM",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out var fromDate))
+        {
+            return span;
+        }
+
+        DateTime toDate;
+        if (toText.Equals("Present", StringComparison.OrdinalIgnoreCase))
+        {
+            var now = DateTime.UtcNow;
+            toDate = new DateTime(now.Year, now.Month, 1);
+        }
+        else if (!DateTime.TryParseExact(
+            toText,
+            "yyyy-MM",
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            out toDate))
+        {
+            return span;
+        }
+
+        var months =
+            (toDate.Year - fromDate.Year) * 12
+            + (toDate.Month - fromDate.Month);
+        if (months < 12)
+        {
+            return span;
+        }
+
+        var years = months / 12;
+        return $"{span} ({years} {(years == 1 ? "year" : "years")})";
     }
 
     public static string MetadataString(
