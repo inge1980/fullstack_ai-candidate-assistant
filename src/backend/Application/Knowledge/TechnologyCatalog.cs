@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -157,9 +158,18 @@ public static class TechnologyCatalog
         IReadOnlyList<KnowledgeRetrievalItem>? items)
     {
         var named = ResolveNamed(question);
-        if (named.Count == 0 || items is null || items.Count == 0)
+        if (named.Count == 0)
         {
             return string.Empty;
+        }
+
+        if (items is null || items.Count == 0)
+        {
+            return
+                $"Named technologies resolved from the question: {string.Join(", ", named)}. "
+                + "No project Technologies field lists them. Do not claim they were used. "
+                + "Do not invent projects, experience, or URLs. "
+                + "If retrieved context is empty, say the experience is not in the project record.";
         }
 
         var exactFound = named
@@ -217,6 +227,20 @@ public static class TechnologyCatalog
         }
 
         return string.Join(" ", parts);
+    }
+
+    public static string DisplayName(string slug)
+    {
+        var normalized = NormalizeSlug(slug);
+        return normalized switch
+        {
+            "csharp" => "C#",
+            "aspnet-core" => "ASP.NET Core",
+            "next.js" => "Next.js",
+            "sql-server" => "SQL Server",
+            _ => CultureInfo.InvariantCulture.TextInfo.ToTitleCase(
+                normalized.Replace('-', ' '))
+        };
     }
 
     public static string FormatMatchLine(

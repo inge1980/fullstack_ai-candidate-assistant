@@ -84,7 +84,7 @@ var questions = new[]
     //Tests: Intent. which of my projects is now a list cue.
     //"Which of my projects used SQL Server?",
 
-    // Tests: Unsupported-claim refusal (Kubernetes appears only as an eval topic inside the RAG knowledge doc, not as a technology)
+    // Tests: Unsupported-claim refusal (no project Technologies field lists kubernetes)
     //"Have you used Kubernetes?",
 
     // Tests: Intersection (have you used A and B)
@@ -253,6 +253,22 @@ foreach (var question in questions)
     Console.WriteLine();
     Console.WriteLine(
         $"[Context] uniqueSources={retrieval.Items.Select(item => item.Source).Distinct(StringComparer.OrdinalIgnoreCase).Count()} selected={promptResults.Count} projects={string.Join(", ", promptResults.Select(item => AnswerPromptFormatter.ProjectId(item.Source)))}");
+
+    if (PromptContextSelector.ShouldSkipLlmForMissingNamedTechnology(
+            question,
+            promptResults))
+    {
+        var related =
+            PromptContextSelector.RelatedFamilyContext(question, retrieval.Items);
+
+        Console.WriteLine();
+        Console.WriteLine("[LLM] Would skip: no exact Technologies match for named slugs");
+        Console.WriteLine(
+            UnsupportedNamedTechnologyAnswer.Format(
+                question,
+                QuestionLocale.Us,
+                related));
+    }
 
     var context =
         AnswerPromptFormatter.FormatContext(promptResults, question);

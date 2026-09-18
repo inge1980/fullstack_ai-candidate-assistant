@@ -8,7 +8,10 @@ Phrases in a question map only through this list. Do not add bare tokens such as
 `sql` or `server`.
 
 Related fallback uses **families**. A missing named slug may pull other slugs in
-the same family. Do not put `react` and `react-native` in one family.
+the same family into retrieval. Prompt context still requires an exact
+`technologies` match before the LLM is called. Related-only hits become a
+grounded refusal (with an optional related-family mention), not generated
+evidence. Do not put `react` and `react-native` in one family.
 
 ## Aliases
 

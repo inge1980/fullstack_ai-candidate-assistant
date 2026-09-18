@@ -299,15 +299,70 @@ public static class PromptContextSelector
                 && TechnologyCatalog.ProjectHasAnySlug(item, relatedSlugs))
             .ToList();
 
+        // Related-only context is not sent to the LLM. Models treat family
+        // neighbors (Docker for Kubernetes) and empty context as permission
+        // to invent the named technology, including prompt-example URLs.
         if (exact.Count == 0)
         {
-            return related
-                .Take(DefaultPromptContextLimit)
-                .ToList();
+            return [];
         }
 
         return exact
             .Concat(related.Take(TechnologyCatalog.RelatedFillCap))
+            .ToList();
+    }
+
+    public static bool ShouldSkipLlmForMissingNamedTechnology(
+        string? question,
+        IReadOnlyList<KnowledgeRetrievalItem> selected)
+    {
+        var named = TechnologyCatalog.ResolveNamed(question);
+        if (named.Count == 0)
+        {
+            return false;
+        }
+
+        if (selected.Count == 0)
+        {
+            return true;
+        }
+
+        return IsTechIntersectionQuestion(question)
+            ? !selected.Any(item => TechnologyCatalog.ProjectHasEverySlug(item, named))
+            : !selected.Any(item => TechnologyCatalog.ProjectHasAnySlug(item, named));
+    }
+
+    public static IReadOnlyList<KnowledgeRetrievalItem> RelatedFamilyContext(
+        string? question,
+        IReadOnlyList<KnowledgeRetrievalItem> items)
+    {
+        var named = TechnologyCatalog.ResolveNamed(question);
+        if (named.Count == 0 || items.Count == 0)
+        {
+            return [];
+        }
+
+        var missing = named
+            .Where(slug => !items.Any(item => TechnologyCatalog.ProjectHasSlug(item, slug)))
+            .ToList();
+
+        if (missing.Count == 0)
+        {
+            return [];
+        }
+
+        var relatedSlugs = TechnologyCatalog.SlugsToMerge(missing)
+            .Where(slug => !named.Contains(slug, StringComparer.OrdinalIgnoreCase))
+            .ToList();
+
+        var related = items
+            .Where(item =>
+                !TechnologyCatalog.ProjectHasAnySlug(item, named)
+                && TechnologyCatalog.ProjectHasAnySlug(item, relatedSlugs))
+            .ToList();
+
+        return UniqueProjects(related)
+            .Take(TechnologyCatalog.RelatedFillCap)
             .ToList();
     }
 

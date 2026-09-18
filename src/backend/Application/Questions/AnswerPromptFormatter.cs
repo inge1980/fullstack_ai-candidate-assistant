@@ -10,6 +10,11 @@ public static class AnswerPromptFormatter
         IReadOnlyList<KnowledgeRetrievalItem> items,
         string? question = null)
     {
+        if (items.Count == 0)
+        {
+            return "(no retrieved evidence - do not invent projects, technologies, or URLs)";
+        }
+
         var named = TechnologyCatalog.ResolveNamed(question);
 
         return string.Join(

@@ -117,6 +117,31 @@ public sealed class QuestionService(
         Console.WriteLine(
             $"[Context] uniqueSources={retrieval.Items.Select(item => item.Source).Distinct(StringComparer.OrdinalIgnoreCase).Count()} selected={promptResults.Count} projects={string.Join(", ", promptResults.Select(item => AnswerPromptFormatter.ProjectId(item.Source)))}");
 
+        if (PromptContextSelector.ShouldSkipLlmForMissingNamedTechnology(
+                question,
+                promptResults))
+        {
+            var related =
+                PromptContextSelector.RelatedFamilyContext(question, retrieval.Items);
+
+            Console.WriteLine(
+                "[LLM] Skipped: no exact Technologies match for named slugs");
+
+            return new AskQuestionResponse(
+                Answer: UnsupportedNamedTechnologyAnswer.Format(
+                    question,
+                    locale,
+                    related),
+                Sources: MapSources(related, includeDebug),
+                Prompt: includeDebug
+                    ? UnsupportedNamedTechnologyAnswer.DebugPrompt(
+                        question,
+                        locale,
+                        related)
+                    : null,
+                Intent: intent);
+        }
+
         // --------------------------------------------------------
         // 3. Build the context for the answer prompt
         // --------------------------------------------------------
@@ -181,28 +206,7 @@ public sealed class QuestionService(
 
         var sourceMappingStopwatch = Stopwatch.StartNew();
 
-        var sources =
-            promptResults
-                .Select(
-                    result =>
-                        new QuestionSource(
-                            ProjectId: AnswerPromptFormatter.ProjectId(result.Source),
-                            Title: AnswerPromptFormatter.ProjectTitle(result),
-                            Url: GetProjectUrl(result.Source),
-                            Heading: result.Heading,
-                            SemanticType: result.SemanticType,
-                            Content: result.Content,
-                            Source: includeDebug
-                                ? result.Source
-                                : null,
-                            Relevance: includeDebug
-                                ? new QuestionRelevance(
-                                    Combined: result.CombinedScore,
-                                    Vector: result.VectorScore,
-                                    Metadata: result.MetadataScore,
-                                    Evidence: result.EvidenceScore)
-                                : null))
-                .ToList();
+        var sources = MapSources(promptResults, includeDebug);
 
         sourceMappingStopwatch.Stop();
         Console.WriteLine($"[Timing] Source mapping: {sourceMappingStopwatch.ElapsedMilliseconds} ms");
@@ -216,6 +220,33 @@ public sealed class QuestionService(
             Sources: sources,
             Prompt: includeDebug ? prompt : null,
             Intent: intent);
+    }
+
+    private IReadOnlyList<QuestionSource> MapSources(
+        IReadOnlyList<KnowledgeRetrievalItem> items,
+        bool includeDebug)
+    {
+        return items
+            .Select(
+                result =>
+                    new QuestionSource(
+                        ProjectId: AnswerPromptFormatter.ProjectId(result.Source),
+                        Title: AnswerPromptFormatter.ProjectTitle(result),
+                        Url: GetProjectUrl(result.Source),
+                        Heading: result.Heading,
+                        SemanticType: result.SemanticType,
+                        Content: result.Content,
+                        Source: includeDebug
+                            ? result.Source
+                            : null,
+                        Relevance: includeDebug
+                            ? new QuestionRelevance(
+                                Combined: result.CombinedScore,
+                                Vector: result.VectorScore,
+                                Metadata: result.MetadataScore,
+                                Evidence: result.EvidenceScore)
+                            : null))
+            .ToList();
     }
 
     private static async Task<string> LoadAnswerPromptAsync(

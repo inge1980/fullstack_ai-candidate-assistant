@@ -685,7 +685,7 @@ The evaluation has covered questions involving:
 * GDPR and form-builder development
 * API and system integrations
 * Job-oriented project matching
-* Platform Engineering responsibilities involving software development, developer experience, internal developer platforms, Kubernetes, IaC, CI/CD, automation, and hybrid on-prem/cloud environments
+* Unsupported technology claims, using a named technology that is not in any project Technologies field
 
 The test questions are also used to investigate retrieval and ranking behavior, including:
 
