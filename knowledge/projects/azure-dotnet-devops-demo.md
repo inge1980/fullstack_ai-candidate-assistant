@@ -20,6 +20,7 @@ technologies:
   - azure
   - container-registry
   - docker
+  - docker-compose
   - github-actions
   - linux
   - terraform

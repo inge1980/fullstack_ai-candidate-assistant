@@ -20,6 +20,7 @@ technologies:
   - postgresql
   - pgvector
   - docker
+  - docker-compose
   - ollama
   - bge-small-en-v1.5
   - github
@@ -127,7 +128,7 @@ At query time, a natural-language question is converted into an embedding using 
 
 The LLM is responsible for interpreting and synthesizing the retrieved evidence, while the retrieval system is responsible for determining which documented project experience is relevant.
 
-When a question names technologies, retrieval also merges overview chunks whose frontmatter `technologies` match resolved slugs or declared family members from the application taxonomy. Prompt context keeps exact technology matches. If no project lists the named technology, the API does not call the LLM: it returns a grounded refusal and may mention family-related work as related only, never as used.
+When a question names technologies, retrieval also merges overview chunks whose frontmatter `technologies` match resolved slugs or declared family members from the application taxonomy. Prompt context keeps exact technology matches. If no project lists the named technology, the API does not call the LLM: it returns a short grounded refusal. It may name family technologies that those projects did list as used, without claiming the named missing technology.
 
 This separation is important because a semantically plausible answer is not necessarily a supported answer. For example, evidence that a technology was used in a project does not automatically establish that it was used in production. The answer-generation instructions therefore explicitly require the model to distinguish documented evidence from unsupported inference.
 

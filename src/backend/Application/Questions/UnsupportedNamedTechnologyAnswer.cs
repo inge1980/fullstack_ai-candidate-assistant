@@ -14,41 +14,26 @@ public static class UnsupportedNamedTechnologyAnswer
             named.Select(TechnologyCatalog.DisplayName).ToList(),
             locale);
 
-        var relatedSlugs = relatedItems
-            .SelectMany(TechnologyCatalog.ProjectSlugs)
-            .Where(slug => !named.Contains(slug, StringComparer.OrdinalIgnoreCase))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(slug => slug, StringComparer.OrdinalIgnoreCase)
+        var relatedNames = TechnologyCatalog
+            .RelatedFamilySlugsPresent(question, relatedItems)
             .Select(TechnologyCatalog.DisplayName)
-            .ToList();
-
-        var projectTitles = relatedItems
-            .Select(AnswerPromptFormatter.ProjectTitle)
-            .Where(title => !string.IsNullOrWhiteSpace(title))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         if (QuestionLocale.Normalize(locale) == QuestionLocale.Nb)
         {
-            var answer =
-                $"Jeg har ikke brukt {namedText}. Det står ikke i Technologies-feltet på noen av de indekserte prosjektene, og jeg finner ikke prosjektbelegg for at jeg har brukt det.";
-
-            if (relatedSlugs.Count > 0 && projectTitles.Count > 0)
+            var answer = $"Jeg har ikke brukt {namedText}.";
+            if (relatedNames.Count > 0)
             {
-                answer +=
-                    $" Jeg har relatert erfaring med {JoinNatural(relatedSlugs, locale)} i {JoinNatural(projectTitles, locale)}. Det er ikke {namedText}-erfaring.";
+                answer += $" Jeg har brukt {JoinNatural(relatedNames, locale)}.";
             }
 
             return answer;
         }
 
-        var english =
-            $"I have not used {namedText}. It is not listed in any project's Technologies field, and there is no project evidence that I used it.";
-
-        if (relatedSlugs.Count > 0 && projectTitles.Count > 0)
+        var english = $"I have not used {namedText}.";
+        if (relatedNames.Count > 0)
         {
-            english +=
-                $" I do have related experience with {JoinNatural(relatedSlugs, locale)} in {JoinNatural(projectTitles, locale)}. That is not {namedText} experience.";
+            english += $" I have used {JoinNatural(relatedNames, locale)}.";
         }
 
         return english;
@@ -60,10 +45,15 @@ public static class UnsupportedNamedTechnologyAnswer
         IReadOnlyList<KnowledgeRetrievalItem> relatedItems)
     {
         var named = TechnologyCatalog.ResolveNamed(question);
+        var relatedProjects = PromptContextSelector.RelatedFamilyContext(
+            question,
+            relatedItems);
+
         return
             "[Grounded refusal - LLM skipped]\n"
             + $"Named technologies with no exact Technologies match: {string.Join(", ", named)}\n"
-            + $"Related family projects: {string.Join(", ", relatedItems.Select(AnswerPromptFormatter.ProjectTitle))}\n\n"
+            + $"Related family technologies: {string.Join(", ", TechnologyCatalog.RelatedFamilySlugsPresent(question, relatedItems))}\n"
+            + $"Related family projects: {string.Join(", ", relatedProjects.Select(AnswerPromptFormatter.ProjectTitle))}\n\n"
             + Format(question, locale, relatedItems);
     }
 

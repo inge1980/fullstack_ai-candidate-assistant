@@ -97,22 +97,66 @@ public static class TechnologyCatalog
         return null;
     }
 
+    public static IReadOnlyList<string> RelatedFamilySlugsPresent(
+        string? question,
+        IReadOnlyList<KnowledgeRetrievalItem> items)
+    {
+        var named = ResolveNamed(question);
+        if (named.Count == 0 || items.Count == 0)
+        {
+            return [];
+        }
+
+        var familyMembers = SlugsToMerge(named)
+            .Where(slug => !named.Contains(slug, StringComparer.OrdinalIgnoreCase))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        if (familyMembers.Count == 0)
+        {
+            return [];
+        }
+
+        return items
+            .SelectMany(ProjectSlugs)
+            .Where(familyMembers.Contains)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(RelatedSlugOrder)
+            .ThenBy(slug => slug, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
     public static HashSet<string> ProjectSlugs(KnowledgeRetrievalItem item)
     {
         var slugs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        if (!item.Metadata.TryGetValue("technologies", out var value)
-            || value is null)
+        object? value = null;
+        foreach (var pair in item.Metadata)
+        {
+            if (string.Equals(pair.Key, "technologies", StringComparison.OrdinalIgnoreCase))
+            {
+                value = pair.Value;
+                break;
+            }
+        }
+
+        if (value is null)
         {
             return slugs;
         }
 
         foreach (var raw in EnumerateTechnologyValues(value))
         {
-            var slug = NormalizeSlug(raw);
-            if (slug.Length > 0)
+            AddProjectSlug(slugs, raw);
+        }
+
+        if (slugs.Count == 0)
+        {
+            var text = value is JsonElement json
+                ? json.ToString()
+                : value.ToString();
+            foreach (var token in TokenizeTechnologyText(text))
             {
-                slugs.Add(slug);
+                AddProjectSlug(slugs, token);
             }
         }
 
@@ -238,6 +282,8 @@ public static class TechnologyCatalog
             "aspnet-core" => "ASP.NET Core",
             "next.js" => "Next.js",
             "sql-server" => "SQL Server",
+            "docker-compose" => "Docker Compose",
+            "container-registry" => "Container Registry",
             _ => CultureInfo.InvariantCulture.TextInfo.ToTitleCase(
                 normalized.Replace('-', ' '))
         };
@@ -488,6 +534,73 @@ public static class TechnologyCatalog
     private static bool IsTokenChar(char character)
     {
         return char.IsLetterOrDigit(character) || character is '#' or '.';
+    }
+
+    private static void AddProjectSlug(HashSet<string> slugs, string? raw)
+    {
+        var slug = NormalizeSlug(raw ?? string.Empty);
+        if (slug.Length > 0)
+        {
+            slugs.Add(slug);
+        }
+    }
+
+    private static int RelatedSlugOrder(string slug)
+    {
+        return NormalizeSlug(slug) switch
+        {
+            "docker" => 0,
+            "docker-compose" => 1,
+            "container-registry" => 2,
+            _ => 100
+        };
+    }
+
+    private static IEnumerable<string> TokenizeTechnologyText(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            yield break;
+        }
+
+        var trimmed = text.Trim();
+        if (trimmed.StartsWith('[') && trimmed.EndsWith(']'))
+        {
+            List<string>? parsed = null;
+            try
+            {
+                using var document = JsonDocument.Parse(trimmed);
+                if (document.RootElement.ValueKind == JsonValueKind.Array)
+                {
+                    parsed = EnumerateTechnologyValues(document.RootElement.Clone())
+                        .ToList();
+                }
+            }
+            catch (JsonException)
+            {
+                parsed = null;
+            }
+
+            if (parsed is not null)
+            {
+                foreach (var nested in parsed)
+                {
+                    yield return nested;
+                }
+
+                yield break;
+            }
+        }
+
+        foreach (Match match in Regex.Matches(
+            trimmed.ToLowerInvariant(),
+            @"[a-z0-9]+(?:[.-][a-z0-9]+)*"))
+        {
+            if (match.Value.Length > 1)
+            {
+                yield return match.Value;
+            }
+        }
     }
 
     private static IEnumerable<string> EnumerateTechnologyValues(object value)

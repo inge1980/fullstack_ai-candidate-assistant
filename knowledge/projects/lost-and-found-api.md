@@ -20,6 +20,7 @@ technologies:
   - entity-framework-core
   - postgresql
   - docker
+  - docker-compose
   - xunit
   - swagger
   - dotnetenv

@@ -10,8 +10,9 @@ Phrases in a question map only through this list. Do not add bare tokens such as
 Related fallback uses **families**. A missing named slug may pull other slugs in
 the same family into retrieval. Prompt context still requires an exact
 `technologies` match before the LLM is called. Related-only hits become a
-grounded refusal (with an optional related-family mention), not generated
-evidence. Do not put `react` and `react-native` in one family.
+short grounded refusal. That refusal may name family technologies that projects
+did list as used, without claiming the named missing slug. Do not put `react`
+and `react-native` in one family.
 
 ## Aliases
 
@@ -41,6 +42,7 @@ Each bullet is `canonical-slug: phrase, phrase`.
 - jquery: jquery, j query
 - swagger: swagger, openapi, open api
 - docker: docker
+- docker-compose: docker-compose, docker compose
 - kubernetes: kubernetes, k8s, kube
 - terraform: terraform
 - azure: azure
@@ -58,4 +60,4 @@ Each bullet is `family-id: slug, slug`. Skip related fallback when a family
 would be too broad to stay honest.
 
 - relational-sql: sql-server, mysql, mariadb, postgresql, sqlite, oracle
-- containers: docker, kubernetes, container-registry
+- containers: docker, docker-compose, kubernetes, container-registry

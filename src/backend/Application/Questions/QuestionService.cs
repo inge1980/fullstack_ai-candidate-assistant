@@ -125,19 +125,19 @@ public sealed class QuestionService(
                 PromptContextSelector.RelatedFamilyContext(question, retrieval.Items);
 
             Console.WriteLine(
-                "[LLM] Skipped: no exact Technologies match for named slugs");
+                $"[LLM] Skipped: no exact Technologies match for named slugs related={string.Join(", ", TechnologyCatalog.RelatedFamilySlugsPresent(question, retrieval.Items))}");
 
             return new AskQuestionResponse(
                 Answer: UnsupportedNamedTechnologyAnswer.Format(
                     question,
                     locale,
-                    related),
+                    retrieval.Items),
                 Sources: MapSources(related, includeDebug),
                 Prompt: includeDebug
                     ? UnsupportedNamedTechnologyAnswer.DebugPrompt(
                         question,
                         locale,
-                        related)
+                        retrieval.Items)
                     : null,
                 Intent: intent);
         }

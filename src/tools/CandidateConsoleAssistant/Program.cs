@@ -258,16 +258,13 @@ foreach (var question in questions)
             question,
             promptResults))
     {
-        var related =
-            PromptContextSelector.RelatedFamilyContext(question, retrieval.Items);
-
         Console.WriteLine();
         Console.WriteLine("[LLM] Would skip: no exact Technologies match for named slugs");
         Console.WriteLine(
             UnsupportedNamedTechnologyAnswer.Format(
                 question,
                 QuestionLocale.Us,
-                related));
+                retrieval.Items));
     }
 
     var context =
