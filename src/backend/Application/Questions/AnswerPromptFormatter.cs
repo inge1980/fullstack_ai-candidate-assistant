@@ -16,8 +16,7 @@ public static class AnswerPromptFormatter
         }
 
         var named = TechnologyCatalog.ResolveNamed(question);
-
-        return string.Join(
+        var chunks = string.Join(
             "\n\n",
             items.Select(
                 (result, index) =>
@@ -25,6 +24,7 @@ public static class AnswerPromptFormatter
                     $"Project: {ProjectTitle(result)}\n" +
                     $"Organization: {MetadataString(result, "organization")}\n" +
                     $"Period: {FormatProjectPeriod(result)}\n" +
+                    $"Status: {MetadataString(result, "status")}\n" +
                     $"Environment: {MetadataString(result, "environment")}\n" +
                     $"Technologies: {ProjectTechnologies(result)}\n" +
                     TechnologyCatalog.FormatMatchLine(result, named) +
@@ -32,6 +32,11 @@ public static class AnswerPromptFormatter
                     $"Heading: {result.Heading}\n" +
                     $"Semantic Type: {result.SemanticType}\n" +
                     $"Content: {result.Content}"));
+
+        var overlapping = FormatOverlappingPeriod(items);
+        return string.IsNullOrWhiteSpace(overlapping)
+            ? chunks
+            : overlapping + "\n\n" + chunks;
     }
 
     public static string Fill(
@@ -78,11 +83,82 @@ public static class AnswerPromptFormatter
 
     private static string FormatProjectPeriod(KnowledgeRetrievalItem result)
     {
+        return TryReadPeriod(result, out var range)
+            ? FormatYearSpan(range.FromText, range.ToText, range.MonthSpan)
+            : string.Empty;
+    }
+
+    private static string FormatOverlappingPeriod(
+        IReadOnlyList<KnowledgeRetrievalItem> items)
+    {
+        var organizations = items
+            .Select(item => MetadataString(item, "organization").Trim())
+            .Where(static organization => organization.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (organizations.Count != 1)
+        {
+            return string.Empty;
+        }
+
+        var ranges = items
+            .Select(item => TryReadPeriod(item, out var range) ? range : (PeriodRange?)null)
+            .Where(static range => range is not null)
+            .Select(static range => range!.Value)
+            .OrderBy(static range => range.FromMonths)
+            .ToList();
+        if (ranges.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var merged = MergeOverlapping(ranges);
+        if (merged.Count != 1 || merged[0].MonthSpan < 24)
+        {
+            return string.Empty;
+        }
+
+        var span = merged[0];
+        return "OverlappingPeriod: "
+            + FormatYearSpan(span.FromText, span.ToText, span.MonthSpan);
+    }
+
+    private static List<PeriodRange> MergeOverlapping(List<PeriodRange> ranges)
+    {
+        var merged = new List<PeriodRange>();
+        foreach (var range in ranges)
+        {
+            if (merged.Count == 0
+                || range.FromMonths > merged[^1].ToMonths + 1)
+            {
+                merged.Add(range);
+                continue;
+            }
+
+            var last = merged[^1];
+            if (range.ToMonths > last.ToMonths)
+            {
+                merged[^1] = last with
+                {
+                    ToMonths = range.ToMonths,
+                    ToText = range.ToText
+                };
+            }
+        }
+
+        return merged;
+    }
+
+    private static bool TryReadPeriod(
+        KnowledgeRetrievalItem result,
+        out PeriodRange range)
+    {
+        range = default;
         if (!result.Metadata.TryGetValue("period", out var value)
             || value is not JsonElement json
             || json.ValueKind != JsonValueKind.Object)
         {
-            return string.Empty;
+            return false;
         }
 
         var fromText = json.TryGetProperty("from", out var fromField)
@@ -92,41 +168,49 @@ public static class AnswerPromptFormatter
             ? toField.GetString()?.Trim()
             : null;
         if (string.IsNullOrWhiteSpace(fromText)
-            || string.IsNullOrWhiteSpace(toText))
+            || string.IsNullOrWhiteSpace(toText)
+            || !TryParseYearMonth(fromText, out var fromDate)
+            || !TryParsePeriodEnd(toText, out var toDate))
         {
-            return string.Empty;
+            return false;
         }
 
-        var span = $"{fromText} to {toText}";
-        if (!DateTime.TryParseExact(
-                fromText,
-                "yyyy-MM",
-                CultureInfo.InvariantCulture,
-                DateTimeStyles.None,
-                out var fromDate))
-        {
-            return span;
-        }
+        range = new PeriodRange(
+            FromMonths: fromDate.Year * 12 + fromDate.Month,
+            ToMonths: toDate.Year * 12 + toDate.Month,
+            FromText: fromText,
+            ToText: toText);
+        return range.ToMonths >= range.FromMonths;
+    }
 
-        DateTime toDate;
-        if (toText.Equals("Present", StringComparison.OrdinalIgnoreCase))
-        {
-            var now = DateTime.UtcNow;
-            toDate = new DateTime(now.Year, now.Month, 1);
-        }
-        else if (!DateTime.TryParseExact(
-            toText,
+    private static bool TryParseYearMonth(string text, out DateTime date)
+    {
+        return DateTime.TryParseExact(
+            text,
             "yyyy-MM",
             CultureInfo.InvariantCulture,
             DateTimeStyles.None,
-            out toDate))
+            out date);
+    }
+
+    private static bool TryParsePeriodEnd(string toText, out DateTime date)
+    {
+        if (toText.Equals("Present", StringComparison.OrdinalIgnoreCase))
         {
-            return span;
+            var now = DateTime.UtcNow;
+            date = new DateTime(now.Year, now.Month, 1);
+            return true;
         }
 
-        var months =
-            (toDate.Year - fromDate.Year) * 12
-            + (toDate.Month - fromDate.Month);
+        return TryParseYearMonth(toText, out date);
+    }
+
+    private static string FormatYearSpan(
+        string fromText,
+        string toText,
+        int months)
+    {
+        var span = $"{fromText} to {toText}";
         if (months < 12)
         {
             return span;
@@ -134,6 +218,15 @@ public static class AnswerPromptFormatter
 
         var years = months / 12;
         return $"{span} ({years} {(years == 1 ? "year" : "years")})";
+    }
+
+    private readonly record struct PeriodRange(
+        int FromMonths,
+        int ToMonths,
+        string FromText,
+        string ToText)
+    {
+        public int MonthSpan => ToMonths - FromMonths;
     }
 
     public static string MetadataString(

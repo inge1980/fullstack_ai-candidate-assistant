@@ -38,6 +38,10 @@ public static class PromptContextSelector
         @"\b(?:as|ab|asa|llc|inc|ltd|gmbh)\b",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
+    private static readonly Regex CompletedStatusRegex = new(
+        @"\bcompleted\b|\bferdigstilte?\b|\bferdig\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
     public static bool IsFilterList(QuestionIntent intent)
     {
         return string.Equals(
@@ -152,7 +156,7 @@ public static class PromptContextSelector
             var selected = ApplyNamedTechnologySelection(
                 question,
                 items,
-                FilterByMentionedOrganization(question, UniqueProjects(items)));
+                FilterCatalogItems(question, items));
 
             return selected
                 .Take(intent.RequestedCount!.Value)
@@ -164,7 +168,7 @@ public static class PromptContextSelector
             return ApplyNamedTechnologySelection(
                 question,
                 items,
-                FilterByMentionedOrganization(question, UniqueProjects(items)));
+                FilterCatalogItems(question, items));
         }
 
         if (IsBroadExperienceQuestion(question)
@@ -417,6 +421,36 @@ public static class PromptContextSelector
             .Replace("&", "and")
             .Replace("'", "")
             .Replace(".", " ");
+    }
+
+    private static List<KnowledgeRetrievalItem> FilterCatalogItems(
+        string? question,
+        IReadOnlyList<KnowledgeRetrievalItem> items)
+    {
+        return FilterByCompletedStatus(
+            question,
+            FilterByMentionedOrganization(question, UniqueProjects(items)));
+    }
+
+    private static List<KnowledgeRetrievalItem> FilterByCompletedStatus(
+        string? question,
+        List<KnowledgeRetrievalItem> items)
+    {
+        if (string.IsNullOrWhiteSpace(question)
+            || items.Count == 0
+            || !CompletedStatusRegex.IsMatch(question))
+        {
+            return items;
+        }
+
+        var completed = items
+            .Where(item => string.Equals(
+                AnswerPromptFormatter.MetadataString(item, "status").Trim(),
+                "completed",
+                StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        return completed.Count > 0 ? completed : items;
     }
 
     private static List<KnowledgeRetrievalItem> FilterByMentionedOrganization(
