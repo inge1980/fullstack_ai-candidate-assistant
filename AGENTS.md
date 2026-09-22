@@ -120,7 +120,7 @@ src/frontend                     Vite + React + TypeScript + Tailwind chat UI
 | `Questions/QuestionLocale.cs` | Locale normalize, query-translation flag, answer-language instruction |
 | `Questions/QuestionSource.cs` / `QuestionRelevance.cs` | Evidence payload |
 | `Questions/QuestionItem.cs` / `QuestionItemStatus.cs` / `QuestionDebugInfo.cs` | Extra question types |
-| `Prompts/answer/answer-prompt.md` | Runtime answer template (copied to output). Includes each present GitHub, live, and portfolio link when a project is named. |
+| `Prompts/answer/answer-prompt.md` | Runtime answer template (copied to output). Includes each present GitHub, live, and portfolio link when a project is named. List tables use Project \| Summary unless more than two listed rows have a portfolio article, in which case they use Project \| Summary \| Article, omit portfolio from the Project cell, and put [Read](url) in Article (empty when that project has no portfolio URL). |
 | `Prompts/taxonomy/technology-families.md` | Runtime alias and family table for named technologies (copied to output, not indexed) |
 | `Prompts/translate/query-translate-prompt-v1.md` | English retrieval query for `nb` |
 

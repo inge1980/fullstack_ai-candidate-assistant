@@ -46,6 +46,18 @@ function prepareAssistantMarkdown(text: string): string {
   );
 }
 
+function markdownLinkText(children: ReactNode): string {
+  if (typeof children === "string" || typeof children === "number") {
+    return String(children);
+  }
+
+  if (Array.isArray(children)) {
+    return children.map(markdownLinkText).join("");
+  }
+
+  return "";
+}
+
 function AssistantMarkdownLink({
   href,
   children,
@@ -54,18 +66,28 @@ function AssistantMarkdownLink({
   children?: ReactNode;
 }) {
   const { t } = useTranslation();
+  const keepWithIcon = markdownLinkText(children).trim().length <= 32;
 
   return (
     <a
-      className="underline underline-offset-2 transition-colors hover:text-muted"
+      className={
+        keepWithIcon
+          ? "inline-flex items-baseline whitespace-nowrap underline underline-offset-2 transition-colors hover:text-muted"
+          : "underline underline-offset-2 transition-colors hover:text-muted"
+      }
       href={href}
       rel="noopener noreferrer"
       target="_blank"
     >
       {children}
+      {keepWithIcon ? "\u00A0" : null}
       <svg
         aria-hidden="true"
-        className="mb-px ml-0.5 inline size-3.5"
+        className={
+          keepWithIcon
+            ? "mb-px inline size-3.5 shrink-0"
+            : "mb-px ml-0.5 inline size-3.5"
+        }
         fill="none"
         viewBox="0 0 24 24"
       >
