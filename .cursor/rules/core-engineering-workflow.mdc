@@ -16,7 +16,7 @@ alwaysApply: true
 
 ## File encoding
 
-Keep Scandinavian letters as real Unicode characters: Æ, Ø, Å, æ, ø, å. That applies to every text file (source, Markdown, JSON, prompts, rules, i18n). High-risk files: `src/frontend/i18n/locales/nb.ts`, `us.ts` (`Norsk bokmål`), and answer prompts such as `answer-prompt-v8.md` (Norwegian link labels like `portefølje`, `både`).
+Keep Scandinavian letters as real Unicode characters: Æ, Ø, Å, æ, ø, å. That applies to every text file (source, Markdown, JSON, prompts, rules, i18n). High-risk files: `src/frontend/i18n/locales/nb.ts`, `us.ts` (`Norsk bokmål`), and answer prompts such as `answer-prompt.md` (Norwegian link labels like `portefølje`, `både`).
 
 - Save text as UTF-8 **without** a BOM. Do not use Windows-1252, UTF-16, or UTF-8 with BOM (a BOM can break Markdown frontmatter and show up as junk in prompts).
 - Prefer the editor Write/StrReplace tools over the shell when the file contains non-ASCII.

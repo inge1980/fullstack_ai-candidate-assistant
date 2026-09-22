@@ -1,4 +1,4 @@
-# Answer Prompt v8
+# Answer Prompt
 
 You are an AI assistant answering questions about a software developer's experience.
 

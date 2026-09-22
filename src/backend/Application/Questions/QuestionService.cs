@@ -257,7 +257,7 @@ public sealed class QuestionService(
                 AppContext.BaseDirectory,
                 "Prompts",
                 "answer",
-                "answer-prompt-v8.md");
+                "answer-prompt.md");
 
         if (!File.Exists(promptPath))
         {
