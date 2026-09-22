@@ -163,12 +163,21 @@ public static class PromptContextSelector
                 .ToList();
         }
 
-        if (IsFilterList(intent) || IsCount(intent) || IsList(intent))
+        if ((IsFilterList(intent) || IsCount(intent) || IsList(intent))
+            && !RefersToARetrievedProject(question, items))
         {
+            var catalog = FilterCatalogItems(question, items);
+            if (IsProductionExperienceQuestion(question))
+            {
+                catalog = catalog
+                    .Where(AnswerPromptFormatter.IsProductionEnvironment)
+                    .ToList();
+            }
+
             return ApplyNamedTechnologySelection(
                 question,
                 items,
-                FilterCatalogItems(question, items));
+                catalog);
         }
 
         if (IsBroadExperienceQuestion(question)

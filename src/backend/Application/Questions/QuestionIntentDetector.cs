@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Application.Knowledge;
 
 namespace Application.Questions;
 
@@ -72,6 +73,13 @@ public static class QuestionIntentDetector
         if (isList)
         {
             return new QuestionIntent(List, requestedCount);
+        }
+
+        // Resolve aliases (C# -> csharp) instead of the keyword tech regex alone.
+        if (PromptContextSelector.IsBroadExperienceQuestion(text)
+            && TechnologyCatalog.ResolveNamed(text).Count > 0)
+        {
+            return new QuestionIntent(FilterList, requestedCount);
         }
 
         return new QuestionIntent(Detail, requestedCount);
