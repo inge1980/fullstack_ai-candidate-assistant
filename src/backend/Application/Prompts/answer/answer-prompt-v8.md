@@ -66,7 +66,7 @@ I built this interview hotel-booking prototype with React and Next.js, including
 
 When GitHub, portfolio, and live all exist in Retrieved context, use that same heading shape with those three URLs from the project's Links field. Do not invent a third URL to complete the pattern.
 
-In Norwegian answers, keep project titles unchanged. Extra-link labels: live stays live demo; portfolio is artikkel i portef�lje; GitHub stays GitHub repo.
+In Norwegian answers, keep project titles unchanged. Extra-link labels: live stays live demo; portfolio is artikkel i portefølje; GitHub stays GitHub repo.
 
 Never add placeholder, unnamed, or "additional" projects, table rows, or slots to fill a requested count. If fewer matching projects exist than N, list only those named in the retrieved context and state that fewer than N match.
 
@@ -74,7 +74,7 @@ A project uses a technology only if that technology appears in the Technologies 
 
 When a broad "what experience" / "hvilken erfaring" question lists technologies with "and" or "og", treat the list as a union: include projects that used any of the named technologies, and say which of those technologies each project used. Do not require every project to have used all of them.
 
-Treat the list as an intersection when the question uses language such as both, together, in the same project, the same project, used ... with ..., b�de, samme prosjekt, or i samme prosjekt. "Have you used A and B" and "Har du brukt A og B" are also intersections: only include projects that used every named technology.
+Treat the list as an intersection when the question uses language such as both, together, in the same project, the same project, used ... with ..., både, samme prosjekt, or i samme prosjekt. "Have you used A and B" and "Har du brukt A og B" are also intersections: only include projects that used every named technology.
 
 {{tech_list_instruction}}
 

@@ -399,7 +399,7 @@ public static class TechnologyCatalog
 
             if (line.StartsWith("## ", StringComparison.Ordinal))
             {
-                section = line[3..].Trim().ToLowerInvariant();
+                section = OnlyLetters(line[3..].Trim().ToLowerInvariant());
                 continue;
             }
 
@@ -429,7 +429,7 @@ public static class TechnologyCatalog
                 continue;
             }
 
-            if (section.StartsWith("alias", StringComparison.Ordinal))
+            if (section is "alias" or "aliases")
             {
                 if (!aliases.TryGetValue(key, out var aliasPhrases))
                 {
@@ -441,14 +441,9 @@ public static class TechnologyCatalog
                 aliasPhrases.Add(key.Replace('-', ' '));
                 aliasPhrases.AddRange(values);
             }
-            else if (section.StartsWith("family", StringComparison.Ordinal))
+            else if (section is "family" or "families")
             {
-                var slugs = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-                {
-                    key
-                };
-
-                slugs.Remove(key);
+                var slugs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 foreach (var slug in values.Select(NormalizeSlug))
                 {
                     if (slug.Length > 0)
@@ -481,6 +476,11 @@ public static class TechnologyCatalog
                 .OrderByDescending(item => item.Phrase.Length)
                 .ToList(),
             families);
+    }
+
+    private static string OnlyLetters(string value)
+    {
+        return new string(value.Where(char.IsAsciiLetter).ToArray());
     }
 
     private static string NormalizeSlug(string value)
