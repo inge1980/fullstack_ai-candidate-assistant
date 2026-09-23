@@ -383,12 +383,98 @@ public static class AnswerPromptFormatter
         return string.Join("\n", lines);
     }
 
+    public static string FormatLinkHeading(
+        KnowledgeRetrievalItem result,
+        bool omitPortfolio,
+        string locale)
+    {
+        var links = KnownHttpLinks(result);
+        var order = omitPortfolio
+            ? HeadingWithoutPortfolio
+            : HeadingKindOrder;
+        var present = new List<string>();
+        foreach (var kind in order)
+        {
+            if (links.ContainsKey(kind))
+            {
+                present.Add(kind);
+            }
+        }
+
+        var title = EscapeLinkText(ProjectTitle(result));
+        if (present.Count == 0)
+        {
+            return title;
+        }
+
+        var heading = $"[{title}]({links[present[0]]})";
+        if (present.Count == 1)
+        {
+            return heading;
+        }
+
+        var extras = present
+            .Skip(1)
+            .Select(kind => $"[{ExtraLinkLabel(kind, locale)}]({links[kind]})");
+        return heading + " (" + string.Join(", ", extras) + ")";
+    }
+
+    public static string PortfolioArticleLink(
+        KnowledgeRetrievalItem result,
+        string locale)
+    {
+        var links = KnownHttpLinks(result);
+        if (!links.TryGetValue("portfolio", out var url))
+        {
+            return string.Empty;
+        }
+
+        var label = QuestionLocale.Normalize(locale) == QuestionLocale.Nb
+            ? "Les"
+            : "Read";
+        return $"[{label}]({url})";
+    }
+
     private static readonly string[] LinkKindOrder =
     [
         "github",
         "live",
         "portfolio"
     ];
+
+    private static readonly string[] HeadingKindOrder =
+    [
+        "github",
+        "portfolio",
+        "live"
+    ];
+
+    private static readonly string[] HeadingWithoutPortfolio =
+    [
+        "github",
+        "live"
+    ];
+
+    private static string ExtraLinkLabel(string kind, string locale)
+    {
+        var norwegian = QuestionLocale.Normalize(locale) == QuestionLocale.Nb;
+        return kind switch
+        {
+            "github" => "GitHub repo",
+            "live" => "live demo",
+            "portfolio" => norwegian ? "artikkel i portefølje" : "portfolio article",
+            _ => kind
+        };
+    }
+
+    private static string EscapeLinkText(string text)
+    {
+        return text
+            .Replace("[", "(", StringComparison.Ordinal)
+            .Replace("]", ")", StringComparison.Ordinal)
+            .Replace("\r", " ", StringComparison.Ordinal)
+            .Replace("\n", " ", StringComparison.Ordinal);
+    }
 
     private static string LinksLine(KnowledgeRetrievalItem result)
     {

@@ -197,6 +197,8 @@ public sealed class QuestionService(
                 prompt,
                 cancellationToken);
 
+        answer = ListTableLinkRewriter.Apply(answer, promptResults, locale);
+
         llmStopwatch.Stop();
         Console.WriteLine($"[Timing] LLM: {llmStopwatch.ElapsedMilliseconds} ms");
 

@@ -43,7 +43,7 @@ For "which projects" / "what projects", list, top-N, filter-list, and "have you 
 
 Before choosing columns, count how many listed rows have a Portfolio (article) URL in that project's Links. If more than two rows have one, use Project | Summary | Article instead of Project | Summary. Then:
 
-- Keep GitHub and live in the Project cell using the link-heading rules, but omit portfolio from that cell.
+- Keep GitHub and live in the Project cell using the link-heading rules, but omit portfolio from that cell. Do this for every row that has a GitHub or live URL, including a professional catalog where most other rows only have a portfolio article. Those portfolio-only rows stay plain titles. Do not drop GitHub or live from the rows that have them.
 - Put the portfolio URL only in the last Article cell. The visible text is [Read](url), not portfolio article (the column header already names it). If that project's Links have no Portfolio (article) URL, the Article cell must be empty: still output the pipes (`| [Title](github-url) | Summary. | |`). Do not invent a URL, do not reuse GitHub or live, and do not write n/a, none, dash, or other placeholder text. Empty Article cells are not padding.
 - If a project has no GitHub and no live, the Project cell is the unlinked Project title; the portfolio URL stays in Article, not on the title.
 - Do not add an Article column when two or fewer listed rows have a portfolio URL. Count answers stay bullets, not this table. Extra links in those two-column tables and in standalone headings still use [portfolio article](url).
