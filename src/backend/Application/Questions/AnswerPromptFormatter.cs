@@ -33,10 +33,35 @@ public static class AnswerPromptFormatter
                     $"Semantic Type: {result.SemanticType}\n" +
                     $"Content: {result.Content}"));
 
-        var overlapping = FormatOverlappingPeriod(items);
-        return string.IsNullOrWhiteSpace(overlapping)
+        var header = FormatContextHeader(items, question);
+        return string.IsNullOrWhiteSpace(header)
             ? chunks
-            : overlapping + "\n\n" + chunks;
+            : header + "\n\n" + chunks;
+    }
+
+    public static bool IsCompanyOrganization(KnowledgeRetrievalItem result)
+    {
+        var organization = MetadataString(result, "organization").Trim();
+        return organization.Length > 0
+            && !organization.Equals(
+                "Personal Project",
+                StringComparison.OrdinalIgnoreCase)
+            && !organization.Equals(
+                "School Project",
+                StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string FormatContextHeader(
+        IReadOnlyList<KnowledgeRetrievalItem> items,
+        string? question)
+    {
+        var spans = FormatOrganizationSpans(items, question);
+        if (!string.IsNullOrWhiteSpace(spans))
+        {
+            return spans;
+        }
+
+        return FormatOverlappingPeriod(items);
     }
 
     public static string Fill(
@@ -101,6 +126,59 @@ public static class AnswerPromptFormatter
             return string.Empty;
         }
 
+        var span = TryMergeSpan(items);
+        return span is null
+            ? string.Empty
+            : "OverlappingPeriod: " + span.Value.Text;
+    }
+
+    private static string FormatOrganizationSpans(
+        IReadOnlyList<KnowledgeRetrievalItem> items,
+        string? question)
+    {
+        if (!PromptContextSelector.IsProfessionalCatalogQuestion(question))
+        {
+            return string.Empty;
+        }
+
+        var groups = items
+            .Where(IsCompanyOrganization)
+            .GroupBy(
+                item => MetadataString(item, "organization").Trim(),
+                StringComparer.OrdinalIgnoreCase)
+            .Select(group => (Organization: group.Key, Span: TryMergeSpan(group.ToList())))
+            .ToList();
+
+        var spanLines = groups
+            .Where(static line => line.Span is not null)
+            .OrderBy(static line => line.Span!.Value.FromMonths)
+            .ThenBy(static line => line.Organization, StringComparer.OrdinalIgnoreCase)
+            .Select(static line => "- " + line.Organization + ": " + line.Span!.Value.Text)
+            .ToList();
+
+        var shorterLines = groups
+            .Where(static line => line.Span is null)
+            .OrderBy(static line => line.Organization, StringComparer.OrdinalIgnoreCase)
+            .Select(static line => "- " + line.Organization)
+            .ToList();
+
+        var blocks = new List<string>();
+        if (spanLines.Count > 0)
+        {
+            blocks.Add("OrganizationSpans:\n" + string.Join("\n", spanLines));
+        }
+
+        if (shorterLines.Count > 0)
+        {
+            blocks.Add("ShorterOrganizations:\n" + string.Join("\n", shorterLines));
+        }
+
+        return string.Join("\n", blocks);
+    }
+
+    private static MergedSpan? TryMergeSpan(
+        IReadOnlyList<KnowledgeRetrievalItem> items)
+    {
         var ranges = items
             .Select(item => TryReadPeriod(item, out var range) ? range : (PeriodRange?)null)
             .Where(static range => range is not null)
@@ -109,18 +187,19 @@ public static class AnswerPromptFormatter
             .ToList();
         if (ranges.Count == 0)
         {
-            return string.Empty;
+            return null;
         }
 
         var merged = MergeOverlapping(ranges);
         if (merged.Count != 1 || merged[0].MonthSpan < 24)
         {
-            return string.Empty;
+            return null;
         }
 
         var span = merged[0];
-        return "OverlappingPeriod: "
-            + FormatYearSpan(span.FromText, span.ToText, span.MonthSpan);
+        return new MergedSpan(
+            span.FromMonths,
+            FormatYearSpan(span.FromText, span.ToText, span.MonthSpan));
     }
 
     private static List<PeriodRange> MergeOverlapping(List<PeriodRange> ranges)
@@ -219,6 +298,8 @@ public static class AnswerPromptFormatter
         var years = months / 12;
         return $"{span} ({years} {(years == 1 ? "year" : "years")})";
     }
+
+    private readonly record struct MergedSpan(int FromMonths, string Text);
 
     private readonly record struct PeriodRange(
         int FromMonths,

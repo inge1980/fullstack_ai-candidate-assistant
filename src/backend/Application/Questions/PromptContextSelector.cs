@@ -42,6 +42,10 @@ public static class PromptContextSelector
         @"\bcompleted\b|\bferdigstilte?\b|\bferdig\b",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
+    private static readonly Regex ProfessionalCatalogRegex = new(
+        @"\bprofessionally\b|\bprofessional\b|\bprofesjonelt\b|\bprofesjonelle\b|\bprofesjonell\b|\bi arbeid\b|\bp\u00e5 jobb\b|\bat work\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
     public static bool IsFilterList(QuestionIntent intent)
     {
         return string.Equals(
@@ -223,6 +227,12 @@ public static class PromptContextSelector
     {
         return !string.IsNullOrWhiteSpace(question)
             && ProductionExperienceRegex.IsMatch(question);
+    }
+
+    public static bool IsProfessionalCatalogQuestion(string? question)
+    {
+        return !string.IsNullOrWhiteSpace(question)
+            && ProfessionalCatalogRegex.IsMatch(question);
     }
 
     public static bool IsTechIntersectionQuestion(string? question)
@@ -436,9 +446,25 @@ public static class PromptContextSelector
         string? question,
         IReadOnlyList<KnowledgeRetrievalItem> items)
     {
-        return FilterByCompletedStatus(
+        return FilterByCompanyOrganization(
             question,
-            FilterByMentionedOrganization(question, UniqueProjects(items)));
+            FilterByCompletedStatus(
+                question,
+                FilterByMentionedOrganization(question, UniqueProjects(items))));
+    }
+
+    private static List<KnowledgeRetrievalItem> FilterByCompanyOrganization(
+        string? question,
+        List<KnowledgeRetrievalItem> items)
+    {
+        if (!IsProfessionalCatalogQuestion(question) || items.Count == 0)
+        {
+            return items;
+        }
+
+        return items
+            .Where(AnswerPromptFormatter.IsCompanyOrganization)
+            .ToList();
     }
 
     private static List<KnowledgeRetrievalItem> FilterByCompletedStatus(
