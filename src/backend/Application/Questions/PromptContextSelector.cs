@@ -7,6 +7,8 @@ public static class PromptContextSelector
 {
     public const int DefaultRetrievalLimit = 25;
     public const int DefaultPromptContextLimit = 10;
+    public const int ReservedMissingTechnologyCap = 15;
+    public const int LargeInputLength = 1500;
     public const int FilterListRetrievalCap = 100;
     public const int FilterListChunksPerProject = 8;
 
@@ -214,7 +216,8 @@ public static class PromptContextSelector
             detail = ApplyNamedTechnologySelection(question, items, detail);
         }
 
-        return detail;
+        // A job ad must not drop a named technology that ranked outside the top 10 chunks
+        return ReserveMissingNamedTechnologyOverviews(question, items, detail);
     }
 
     public static bool IsBroadExperienceQuestion(string? question)
@@ -235,9 +238,15 @@ public static class PromptContextSelector
             && ProfessionalCatalogRegex.IsMatch(question);
     }
 
+    public static bool IsLargeInput(string? question)
+    {
+        return !string.IsNullOrWhiteSpace(question)
+            && question.Trim().Length >= LargeInputLength;
+    }
+
     public static bool IsTechIntersectionQuestion(string? question)
     {
-        if (string.IsNullOrWhiteSpace(question))
+        if (string.IsNullOrWhiteSpace(question) || IsLargeInput(question))
         {
             return false;
         }
@@ -265,6 +274,11 @@ public static class PromptContextSelector
 
     public static string TechListInstruction(string? question)
     {
+        if (IsLargeInput(question))
+        {
+            return "This question is long, such as a pasted job ad. Named technologies are a union, even if the text contains both, både, and, or og. Include a project when it used any named technology, and say which of those technologies it used. A named technology with no matching project is not in the record. Do not require one project to have used every named technology.";
+        }
+
         if (IsTechIntersectionQuestion(question))
         {
             return "For this question, the named technologies are an intersection. Only include a project if it used every named technology, according to that project's Technologies field or retrieved content. Do not use a project that has only one of them.";
@@ -276,6 +290,79 @@ public static class PromptContextSelector
         }
 
         return string.Empty;
+    }
+
+    private static List<KnowledgeRetrievalItem> ReserveMissingNamedTechnologyOverviews(
+        string? question,
+        IReadOnlyList<KnowledgeRetrievalItem> allItems,
+        List<KnowledgeRetrievalItem> selected)
+    {
+        var named = TechnologyCatalog.ResolveNamed(question);
+        if (named.Count == 0 || allItems.Count == 0)
+        {
+            return selected;
+        }
+
+        var result = selected.ToList();
+        var chosenSources = result
+            .Select(item => item.Source)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        for (var reserved = 0; reserved < ReservedMissingTechnologyCap; reserved++)
+        {
+            var missing = named
+                .Where(slug => !result.Any(item =>
+                    TechnologyCatalog.ProjectHasSlug(item, slug)))
+                .ToList();
+            if (missing.Count == 0)
+            {
+                break;
+            }
+
+            var best = missing
+                .Select(slug => BestChunkForSlug(allItems, slug, chosenSources))
+                .OfType<KnowledgeRetrievalItem>()
+                .OrderByDescending(item => item.CombinedScore)
+                .FirstOrDefault();
+            if (best is null)
+            {
+                break;
+            }
+
+            result.Add(best);
+            chosenSources.Add(best.Source);
+        }
+
+        return result;
+    }
+
+    private static KnowledgeRetrievalItem? BestChunkForSlug(
+        IReadOnlyList<KnowledgeRetrievalItem> items,
+        string slug,
+        HashSet<string> excludedSources)
+    {
+        KnowledgeRetrievalItem? fallback = null;
+
+        foreach (var item in items)
+        {
+            if (excludedSources.Contains(item.Source)
+                || !TechnologyCatalog.ProjectHasSlug(item, slug))
+            {
+                continue;
+            }
+
+            if (string.Equals(
+                    item.SemanticType,
+                    "overview",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return item;
+            }
+
+            fallback ??= item;
+        }
+
+        return fallback;
     }
 
     private static List<KnowledgeRetrievalItem> ApplyNamedTechnologySelection(

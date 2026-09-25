@@ -8,7 +8,7 @@ role: Fullstack Developer
 environment: development
 
 period:
-  from: 2022-01
+  from: 2022-11
   to: 2025-01
 
 status: completed

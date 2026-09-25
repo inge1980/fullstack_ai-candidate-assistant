@@ -6,6 +6,7 @@ namespace Application.Questions;
 public static class QuestionIntentDetector
 {
     public const string Detail = "detail";
+    public const string LargeInput = "large-input";
     public const string List = "list";
     public const string Count = "count";
     public const string FilterList = "filter-list";
@@ -80,6 +81,11 @@ public static class QuestionIntentDetector
             && TechnologyCatalog.ResolveNamed(text).Count > 0)
         {
             return new QuestionIntent(FilterList, requestedCount);
+        }
+
+        if (PromptContextSelector.IsLargeInput(text))
+        {
+            return new QuestionIntent(LargeInput, requestedCount);
         }
 
         return new QuestionIntent(Detail, requestedCount);
