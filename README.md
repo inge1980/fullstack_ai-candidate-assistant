@@ -6,7 +6,11 @@ The system uses Retrieval-Augmented Generation (RAG) to combine semantic search 
 
 The Markdown knowledge base remains the Single Source of Truth. PostgreSQL is used as a generated retrieval index that can be discarded and rebuilt whenever the knowledge structure, chunking strategy, metadata schema, or embedding model changes.
 
-The goal is to create an AI assistant that can answer questions about a candidate's:
+The current work is a continuation of that backend. A local chat asks the existing API, renders the answer, and is where prompt and question-routing changes are judged. Ingestion, the vector index, and the provider clients stay in place. They are not being rebuilt in this phase.
+
+The chat was built in cooperation with Cursor, using Grok as the coding model in the editor. That was paired work in the IDE: the developer directed the behavior and decided when an answer was sane.
+
+The goal is to answer questions about a candidate's:
 
 * Projects
 * Technical experience
@@ -59,6 +63,17 @@ Retrieved evidence is manually evaluated to determine whether it is sufficient t
 * Provider-level fallback
 * Returns source URLs for inspecting the original project documentation
 
+## Chat UI
+
+* Local Vite, React, and TypeScript client of the existing API
+* One question on screen, with edit, resend, and re-ask
+* Markdown answers, including tables and links
+* English (US) and Norwegian BokmÃ¥l, in the chrome and in the answer
+* Progress text from the live pipeline, including provider and model
+* Keyword intent preview while typing, with no extra LLM call
+* Browser history of recent questions, and a debug view of the prompt during development
+* Implemented with Cursor, using Grok as the editor model
+
 ## RAG Evaluation Tool
 
 * Standalone console tool for evaluating retrieval quality
@@ -92,7 +107,8 @@ Retrieved evidence is manually evaluated to determine whether it is sufficient t
 * Provider-independent LLM integration layer
 * Configuration-driven provider/model fallback
 * Docker Compose for local infrastructure
-* Standalone console tools for indexing and retrieval evaluation
+* Standalone console tools for indexing and retrieval inspection
+* Vite React chat as the local client used to read and re-ask answers
 
 ---
 
@@ -129,11 +145,20 @@ Retrieved evidence is manually evaluated to determine whether it is sufficient t
 * JSONB for project metadata
 * 384-dimensional embedding vectors
 
+## Frontend
+
+* React
+* TypeScript
+* Vite
+* Tailwind CSS
+* i18next
+
 ## Infrastructure
 
 * Docker
 * Docker Compose
 * Ollama
+* Cursor, with Grok as the editor model for the chat and the prompt edits in this phase
 
 ---
 
@@ -274,7 +299,7 @@ Example questions can cover:
 * Infrastructure, CI/CD, automation, and cloud experience
 * Experience spanning multiple projects
 
-The evaluation is intentionally manual. The output makes it possible to inspect retrieval quality, identify false-positive results, compare relevance scoring, and verify that the generated prompt contains appropriate evidence without requiring a separate frontend.
+The evaluation is intentionally manual. The output makes it possible to inspect retrieval quality, identify false-positive results, compare relevance scoring, and verify that the generated prompt contains appropriate evidence. Reading the finished answer is done in the chat, described below.
 
 ---
 
@@ -312,6 +337,27 @@ The API workflow is:
 6. Send the prompt to the configured LLM.
 7. Use the configured fallback chain if the selected provider/model fails.
 8. Return the generated answer, together with evidence chunks, similarity scores, and source URLs.
+
+Swagger remains useful for the JSON payload. The chat is the place where the answer is read as a person would read it.
+
+---
+
+## 7. Start the chat and test answers
+
+Install and start the frontend from the repo root:
+
+    npm install --prefix src/frontend
+    npm run dev --prefix src/frontend
+
+The UI is served at:
+
+    http://localhost:5173
+
+Vite proxies `/api` to `http://localhost:5179`. The API does not enable CORS. The browser does not embed queries, search the index, or call an LLM.
+
+The chat posts `{ question, locale }` to `POST /api/v1/Questions/progress`. Locale is `us` or `nb`. For `nb`, the API translates the question to English before retrieval and asks the model for Norwegian Bokmål. While typing, the form previews keyword intent at `POST /api/v1/Questions/intent` without calling an LLM.
+
+Use the chat to re-ask a question after a prompt change. In development the answer can be expanded to show the prompt that was sent. Recent questions stay in browser storage.
 
 ---
 
@@ -663,7 +709,7 @@ The fallback order should therefore be based on availability, latency, model qua
 
 # Testing and Evaluation
 
-The retrieval system is currently evaluated primarily through the standalone `CandidateConsoleAssistant` console tool.
+Answers are currently judged in the local chat. A question is asked, the rendered answer is read, and the prompt behind it is checked when the answer looks too fluent. `CandidateConsoleAssistant` remains the tool for ranked chunks and scores.
 
 The evaluation has covered questions involving:
 
@@ -709,7 +755,9 @@ The retrieval output is inspected together with:
 * Project metadata
 * Source URL
 
-The current evaluation workflow exposes the top 10 retrieved results for manual inspection and generates the LLM answer prompt using the retrieved evidence.
+The console still exposes retrieved results for manual inspection and generates the same answer prompt the API sends.
+
+Later chat tests added the shapes the prompt was getting wrong: which projects, how many, top N, "have you used", production versus school or personal, professional spans, long job-ad text, Norwegian questions, and technologies that are not in any project. A failure was kept when the answer invented a project, a URL, a technology, or a workplace, or when it dropped a matching project the prompt had been given. The fix was re-asked in the chat.
 
 Metadata-aware scoring and evidence-aware reranking are already implemented and exposed as part of the retrieval evaluation output.
 
@@ -759,6 +807,9 @@ The project demonstrates:
 * Configurable GitHub source references
 * Clean backend architecture
 * Practical use of LLMs in developer tooling
+* A local chat client for reading and re-asking those answers
+* Prompt and question-routing changes driven by GUI tests
+* Paired implementation in Cursor with Grok
 
 ---
 
@@ -806,23 +857,23 @@ The project demonstrates:
 
 ## User Interface and Productization
 
-The current submission is intentionally backend-focused. A future version could extend the API into a publicly accessible candidate assistant with:
+A local React chat is in place and is the test loop for prompt changes. It was built with Cursor, using Grok as the editor model.
 
-* React-based chat interface
-* Candidate-oriented user experience
-* Job-description input and analysis
-* Candidate-to-job matching
-* Source references in generated answers
+Still later, if the assistant is published:
+
 * Authentication and access control
 * Production deployment and monitoring
+* Candidate-to-job matching as a product, beyond pasting a job ad into the chat
 
-These features are outside the scope of the current Module 4 submission.
+Those items are outside the current phase. The current phase is prompt tuning and LLM testing in the local GUI.
 
 ---
 
 # Status
 
-The backend project is complete for the scope of the Module 4 submission.
+The backend documented in `ai-candidate-assistant-rag.md` is in place and remains the host. The active work is the local chat and the prompt tuning done by testing questions in that chat.
+
+The chat was implemented in cooperation with Cursor, using Grok as the coding model in the editor.
 
 The following components are operational:
 
@@ -838,15 +889,19 @@ The following components are operational:
 * Configurable multi-provider LLM fallback
 * REST API for question answering and retrieval results
 * Configurable GitHub source URLs for retrieved project evidence
+* Local Vite React chat for asking, re-asking, and reading answers
+* English (US) and Norwegian Bokmål in the chat
+* Pipeline progress in the chat, including the provider and model being asked
+* Answer-prompt and question-routing adjustments from GUI tests
 
-The `CandidateConsoleAssistant` can be used to inspect retrieved project evidence, relevance scoring, and the generated LLM answer prompt independently of the API.
+The `CandidateConsoleAssistant` can be used to inspect retrieved project evidence, relevance scoring, and the generated LLM answer prompt independently of the API. The chat is used to judge the finished answer.
 
 The API can answer questions using retrieved project evidence and exposes the retrieved sources, source URLs, and relevance information alongside the generated answer.
 
 The GitHub source URL is constructed from configuration values for the repository owner, repository, branch, and projects folder, allowing the source repository location to be changed without modifying the question service implementation.
 
-The current implementation is intentionally focused on the backend ingestion, retrieval, evaluation, and LLM integration required for the project scope.
+The current phase does not rebuild ingestion or the vector index. It fine-tunes the answer prompt and tests it against configured LLMs in the local GUI.
 
-A future iteration could extend the system into a publicly accessible candidate assistant with a React-based user interface and additional production infrastructure.
+Authentication and public deployment are still out of scope.
 
 ---

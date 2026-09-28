@@ -1461,7 +1461,7 @@ A large fallback chain is not automatically better than a smaller, well-ordered 
 - Add observability around ingestion, retrieval, and LLM fallback.
 - Add production secret management rather than relying on `.env` outside local development.
 - Add production deployment when the retrieval and generation workflow is sufficiently validated.
-- Develop a candidate-facing web interface, potentially using React, as a separate frontend project.
+- A local React chat for prompt tuning and LLM testing now exists. That continuation is `gui-for-ai-assisted-candidate.md`. It was built in Cursor with Grok LLM as the editor assistant.
 - Expose the completed backend through a public chat-oriented application in a future iteration.
 - Add authentication and access control if the assistant is made publicly accessible.
 

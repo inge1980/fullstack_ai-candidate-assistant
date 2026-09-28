@@ -154,7 +154,8 @@ Vite + React + TypeScript + Tailwind. Chat UI posts `{ question, locale }` (`us`
 
 Indexed files in `knowledge/projects/`:
 
-- `ai-candidate-assistant-rag.md` (this product)
+- `ai-candidate-assistant-rag.md` (backend RAG product)
+- `gui-for-ai-assisted-candidate.md` (local chat UI and prompt tuning; Cursor with Grok, not a Grok bot)
 - `azure-dotnet-devops-demo.md`
 - `bootstrap-migration.md`
 - `canteen-ordering-system.md`

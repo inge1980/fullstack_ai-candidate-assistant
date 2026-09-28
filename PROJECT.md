@@ -2,233 +2,158 @@
 
 ## Purpose
 
-Create a backend-focused AI knowledge assistant designed to represent a developer's projects, technical experience, decisions, and professional background.
+Continue the finished Retrieval-Augmented Generation (RAG) backend with a local chat interface, and use that interface to fine-tune the answer prompt and test answers against configured LLMs.
 
-The system should use Retrieval-Augmented Generation (RAG) to retrieve relevant evidence from a Markdown-based knowledge base before generating an answer with an LLM.
+The backend already accepts a question, retrieves project evidence, builds a prompt from those chunks, and returns an answer. That system stays the host. This phase does not rebuild ingestion, the vector index, or the provider clients.
 
-The project should combine backend development with practical use of semantic search, vector databases, embeddings, LLM integration, and resilient external API integration within an individual four-week Module 4 backend project.
+The chat is a Vite and React client. It posts a question and a locale to the existing API and renders the answer as Markdown. American English and Norwegian Bokmål are both supported. The usual test is to read the answer, compare it with the prompt that was sent, and change the prompt or the question routing when the answer is plausible but wrong.
 
-The Markdown knowledge base should be the Single Source of Truth (SSoT). PostgreSQL with pgvector should be used as a generated retrieval index that can be discarded and rebuilt from the Markdown source.
-
-The project should also include a console-based evaluation tool for manually inspecting retrieval quality, relevance scoring, retrieved evidence, and the generated LLM prompt independently of the REST API.
+The chat and the prompt edits in this phase were made in cooperation with Cursor, using Grok as the coding model in the editor. That was paired work in the IDE.
 
 ---
 
 ## Learning Objectives
 
-The project should demonstrate practical understanding of:
+This phase should demonstrate practical understanding of:
 
-* C# and ASP.NET Core backend development
-* Docker and Docker Compose
-* Application architecture
-* REST API design
-* PostgreSQL and pgvector
-* Semantic search and Retrieval-Augmented Generation (RAG)
-* Local embedding generation
-* Document ingestion and processing
-* Evidence-based LLM responses
-* Integration with external LLM providers
-* Provider and model fallback
-* Error handling and failure resilience
-* Observability for manual testing and evaluation
-* Retrieval evaluation and evidence inspection
+* Get experience with Cursor development workflow
+* A frontend that is only a client of an existing API
+* Chat interaction for asking, editing, and re-asking a question
+* Rendering model output as Markdown, including tables and links
+* Locale handling for English and Norwegian Bokmål, while retrieval stays on the English knowledge base
+* Progress feedback from the real ask pipeline
+* Prompt engineering judged by the answer a person reads
+* Evidence limits: no invented technologies, projects, responsibilities, or production use
+* Manual testing of many question shapes against live LLMs
 
-The project should prioritize a working end-to-end backend over implementing a large number of unrelated features.
 
 ---
 
 ## MVP Scope
 
-The MVP should be a backend system that can:
+The continuation should:
 
-* Expose the functionality through an ASP.NET Core REST API.
-* Maintain developer knowledge as Markdown documents.
-* Extract project metadata from YAML frontmatter.
-* Process knowledge documents recursively.
-* Split documents into semantic sections.
-* Generate embeddings for knowledge sections.
-* Store sections, metadata, and embeddings in PostgreSQL using pgvector.
-* Convert user questions into embeddings.
-* Retrieve relevant project evidence using semantic similarity.
-* Apply metadata retrieval and ranking.
-* Provide retrieved evidence to an LLM.
-* Generate answers based on the retrieved evidence.
-* Avoid unsupported claims when evidence is insufficient.
-* Support multiple LLM providers and models.
-* Fall back to alternative models or providers when requests fail.
-* Return generated answers together with retrieved evidence and relevance information.
-* Generate source references to the corresponding project documents.
-* Provide a console-based retrieval evaluation workflow for manually inspecting retrieval results and generated answer prompts.
+* Serve a local Vite, React, and TypeScript chat against the existing API.
+* Send `{ question, locale }` with locale `us` or `nb`.
+* Show pipeline progress while an answer is generated, including the provider and model on each attempt.
+* Render the answer with tables and links, and allow the question to be edited or asked again.
+* Keep recent questions in the browser.
+* Preview keyword intent while typing, without an extra LLM call.
+* In development, show the prompt that was sent, so a fluent answer can be checked against the evidence.
+* Adjust the answer prompt and the chunk selection in front of it when GUI tests show a bad answer.
+* Keep Swagger and the console tool on the same prompt path as the chat.
 
-The MVP should be considered complete when the complete flow from Markdown knowledge, through indexing and retrieval, to evidence-based answer generation works locally through the backend API, with retrieval independently inspectable through the console evaluation tool.
+The phase is in good shape when a local question in the chat returns a grounded answer, and a failed answer can be re-asked after a prompt change without leaving the UI.
 
 ---
 
 ## Functional Requirements
 
-### Knowledge Base
+### Existing backend
 
-The system must use Markdown files as the authoritative knowledge source.
+The API and embeddings already exist. The chat calls them.
 
-The PostgreSQL index must be rebuildable from the Markdown source.
-
-### Indexing
-
-The indexer must:
-
-1. Process Markdown documents recursively.
-2. Exclude template documents.
-3. Parse YAML frontmatter.
-4. Extract project metadata.
-5. Split documents into semantic sections.
-6. Propagate project metadata to generated chunks.
-7. Generate embeddings.
-8. Store chunks, metadata, and embeddings in PostgreSQL.
-
-### Retrieval
-
-The system must:
-
-1. Convert a user question into an embedding.
-2. Perform semantic similarity search using pgvector.
-3. Retrieve relevant project sections.
-4. Apply similarity / evidence scoring.
-5. Expose retrieval information for manual inspection.
-6. Support inspection of the top-ranked retrieved results through the console evaluation tool.
-
-### Retrieval Evaluation
-
-The project should provide a console-based evaluation tool that can:
-
-1. Accept candidate-oriented questions for evaluation.
-2. Generate an embedding for the question.
-3. Perform retrieval against the indexed knowledge base.
-4. Calculate and display combined retrieval information, including vector, and evidence scores.
-5. Display the top-ranked retrieved results.
-6. Show source project, section, semantic type and retrieved content.
-7. Generate and display the LLM answer prompt based on the retrieved evidence.
-
-The evaluation tool should make it possible to inspect retrieval quality and evidence sufficiency before relying on the generated answer.
-
-### Answer Generation
-
-The LLM must receive retrieved project evidence rather than the complete knowledge base.
-
-Generated answers should be based on the retrieved evidence and should avoid unsupported claims.
-
-When the available evidence is insufficient, the system should state this instead of hallucinating an answer.
-
-### LLM Integration
-
-The backend should use a provider-independent LLM abstraction.
-
-A provider should be able to contain multiple configured models.
-
-The fallback system should evaluate configured provider/model combinations sequentially and continue when a request fails.
-
-Provider/model failures should be logged with relevant failure information.
-
-### REST API
-
-The backend should expose a REST API for question answering.
-
-The primary workflow should be:
+The primary API workflow remains:
 
 1. Receive a question.
-2. Generate a query embedding.
+2. For locale `nb`, translate the question to English before embedding.
 3. Retrieve relevant knowledge.
-4. Build the LLM prompt using the retrieved evidence.
-5. Execute the configured provider/model fallback chain.
-6. Return the generated answer.
-7. Return retrieved evidence and relevance information.
+4. Build the LLM prompt from the retrieved evidence.
+5. Run the configured provider and model fallback chain.
+6. Return the answer and the retrieved evidence.
 
-Swagger should be available for manual API testing.
+### Chat
 
-### Source References
+The chat must:
 
-Retrieved project evidence should be associated with the corresponding source.
+1. Submit a question to the progress endpoint and show status phases until the result arrives.
+2. Render the answer as Markdown. Links open in a new tab.
+3. Support editing the question and sending it again, and re-asking it unchanged.
+4. Store the locale and successful question-answer pairs in the browser.
+5. Offer English (US) and Norwegian Bokmål for the chrome and for the answer language.
+6. Leave retrieval, embeddings, and LLM calls on the server.
+
+### Answer quality
+
+Prompt and routing changes in this phase are driven by answers read in the chat. A sane answer:
+
+* Uses only retrieved evidence.
+* Names every matching project when the question asks for a list, a count, or whether a named technology was used.
+* Treats frontmatter organization and environment as the source of truth for school, personal, company, and production.
+* Refuses a named technology that no selected project lists, instead of inventing use.
+* Includes GitHub, live, and portfolio links only when that project's metadata contains them.
+
+### Retrieval inspection
+
+Swagger and `CandidateConsoleAssistant` stay available for chunks, scores, and the prompt text. The chat is the place where the finished answer is judged.
 
 ---
 
 ## Technical Requirements
 
-The implementation should use:
+The continuation uses:
 
-* C#
-* .NET / ASP.NET Core Web API
-* PostgreSQL
-* pgvector
-* Embeddings model
-* Docker
-* Docker Compose
+* React
+* TypeScript
+* Vite
+* Tailwind CSS
+* The existing ASP.NET Core API
 
-The embedding model should be used for both document and query embeddings.
+The browser talks to the API through the Vite dev proxy. The API does not enable CORS.
 
-The application should use configuration-driven provider/model selection.
+LLM API keys stay in environment variables. The chat does not hold provider keys and does not call a model itself.
 
-LLM API keys must be supplied through environment variables rather than stored in source-controlled configuration.
+Cursor with Grok may be used as the editor assistant for UI and prompt edits.
 
-The PostgreSQL database should be treated as generated infrastructure rather than SSoT.
-
-A console-based evaluation tool should be available for retrieval and evidence inspection independently of the REST API.
+There is no new database. Locale and chat history stay in browser `localStorage`. PostgreSQL remains the backend retrieval index.
 
 ---
 
 ## Acceptance Criteria
 
-The project should be considered successful when:
+This phase is successful when:
 
-* Markdown knowledge can be indexed successfully.
-* The retrieval index can be rebuilt from the Markdown knowledge base.
-* User questions can retrieve relevant project evidence.
-* Retrieval results can be inspected manually.
-* Retrieval and scoring are available.
-* The console evaluation tool can display retrieved results, scores and evidence.
-* The console evaluation tool can generate and display the LLM answer prompt based on retrieved evidence.
-* Retrieved evidence is supplied to the LLM.
-* Generated answers are constrained by available evidence.
-* Multiple LLM providers can be configured.
-* Provider/model fallback works when a configured candidate fails.
-* Swagger can be used to test the API from question to JSON constructed answer with evidence details.
-* The complete backend workflow can run locally.
-* Retrieval quality can be evaluated independently of the final generated answer.
+* The local chat can ask a question and show a formatted answer from the API.
+* Loading text follows the real pipeline, including provider and model when a model is being called.
+* English and Norwegian Bokmål both work against the English knowledge base.
+* A question can be edited, re-asked, and found again in local history.
+* Development builds can show the prompt behind an answer.
+* List, count, professional, and named-technology questions have been tried in the chat, and prompt or routing changes from those tests are what the API sends.
+* An unsupported technology produces a short grounded refusal rather than a fabricated project.
+* The console tool and the API still fill the same answer prompt.
+* The system still runs locally, without authentication or a public deployment.
 
 ---
 
 ## Out of Scope
 
-The following should be outside the scope of the Module 4 project:
+The following stay outside this phase:
 
-* React or mobile frontend
+* Rebuilding Markdown ingestion, chunking, or the embedding index
 * User authentication
-* Public deployment
-* Cloud infrastructure
-* Production monitoring
-* Complete candidate-to-job matching product
-* Automated retrieval evaluation benchmark
-
-These may be natural future extensions, but should not be required for the current project.
+* Public deployment and production monitoring
+* A complete candidate-to-job matching product
+* An automated retrieval or answer benchmark
+* A mobile client
 
 ---
 
 ## Project Constraints
 
-The project scope should be defined from the Module 4 learning objectives and the chosen technical direction.
+The constraint is to improve the answers people actually read, using the local chat as the test loop.
 
-The main constraint should be to develop a realistic backend MVP within the available project period while demonstrating meaningful understanding of backend architecture, databases, AI integration, retrieval, external service resilience, and practical evaluation of retrieval quality.
+Prompt and routing changes belong on the server, so Swagger, the console, and the chat stay on one path. The browser remains a client.
 
-The project should intentionally focus on backend functionality rather than building a complete end-user product.
+Answer quality is judged manually. A generated edit is not accepted until the same question is asked again in the chat.
 
-The retrieval evaluation should initially remain manual through the console evaluation tool rather than requiring a formal automated benchmark.
+The backend phase is background. Its retrieval and fallback design should not be replaced in order to tune a paragraph.
 
 ---
 
 ## Definition of Done
 
-The project should be considered complete for the Module 4 scope when the end-to-end backend workflow is operational:
+This continuation is in working order when the local chat can take a candidate question in English or Norwegian Bokmål, show progress from the API, and render a grounded answer with the links the project metadata actually contains.
 
-Markdown knowledge can be indexed, relevant evidence can be retrieved using semantic search, the evidence can be supplied to an LLM, and the generated answer can be returned through the REST API together with the retrieved sources and relevance information.
+The answer prompt and the question routing in front of it have been adjusted from failed answers in that chat: full project lists where a list is required, professional and school work taken from frontmatter, and a refusal when the named technology is absent.
 
-The retrieval pipeline should also be independently inspectable through the console evaluation tool, including retrieved projects and sections, relevance information, evidence content, and the generated answer prompt.
-
-The implementation should have been manually tested using questions covering different technologies, projects, responsibilities, and distinctions such as production versus non-production experience.
+Retrieval can still be inspected in the console and in Swagger. Nothing in this phase requires a public deployment.
