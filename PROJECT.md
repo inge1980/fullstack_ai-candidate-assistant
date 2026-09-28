@@ -119,6 +119,7 @@ This phase is successful when:
 * A question can be edited, re-asked, and found again in local history.
 * Development builds can show the prompt behind an answer.
 * List, count, professional, and named-technology questions have been tried in the chat, and prompt or routing changes from those tests are what the API sends.
+* A pasted job listing returns every project that used any technology named in the ad. That remains prompt tuning, not a candidate-to-job matching product.
 * An unsupported technology produces a short grounded refusal rather than a fabricated project.
 * The console tool and the API still fill the same answer prompt.
 * The system still runs locally, without authentication or a public deployment.
