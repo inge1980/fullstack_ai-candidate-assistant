@@ -12,7 +12,7 @@ Keep the frontend simple, production-oriented, and visually restrained. Prefer s
 
 Use the current Tailwind CSS setup for Vite. Do not introduce legacy Tailwind configuration unless required by the installed version.
 
-Do not modify backend code unless the frontend cannot work without it. Do not add a state-management library, UI component library, or other dependency unless explicitly requested or there is a clear need; explain why if you add one.
+Do not modify backend code unless the frontend cannot work without it. Do not add a state-management library, UI component library, or other dependency unless the user explicitly asks. If the requested UI cannot work without one, stop and ask before adding it.
 
 ## Visual QA (manual)
 

@@ -10,9 +10,20 @@ alwaysApply: true
 - Do not modify unrelated files.
 - Explain trade-offs before major architectural changes.
 - Consider security, error handling, performance and maintainability.
-- When requirements are ambiguous, identify the ambiguity before implementing.
-- Suggest tests for new business logic.
+- When requirements are ambiguous, identify the ambiguity before implementing. If two valid approaches would change behavior or architecture differently, name them and wait. Small local choices inside an explicit implementation request can proceed.
+- Suggest tests for new business logic. Do not add a test project unless asked.
 - Never assume generated code is correct; explain why it works.
+
+## Scope
+
+A question, review, or recommendation is read-only. "Take a look", "review this", "what's wrong?", and "what would you recommend?" are not permission to edit. Edit only when the user asks to implement, fix, change, or update something.
+
+- Change only the requested behavior. Do not rename, reformat, edit comments, remove unused code, or fix unrelated warnings and bugs in the same change.
+- If the change needs a file the user did not name, stop and ask. Standing exceptions: update `AGENTS.md` when structure, commands, architecture, or pitfalls change, and update `knowledge/projects/ai-candidate-assistant-rag.md` when the product story changes.
+- Do not add npm or NuGet packages unless the user asks. If the requested change cannot work without one, stop and ask before adding it.
+- Do not create new files unless the user asks or the change cannot live in an existing file.
+- Stop if an edit would overwrite unrelated uncommitted work in that file.
+- No commit, push, branch, or Git history change unless the user asks.
 
 ## File encoding
 
