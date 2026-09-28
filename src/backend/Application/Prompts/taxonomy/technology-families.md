@@ -50,6 +50,7 @@ Each bullet is `canonical-slug: phrase, phrase`.
 - subversion: subversion, svn
 - iis: iis
 - n8n: n8n
+- llm: llm, ai, ki
 - pgvector: pgvector, pg vector
 - material-ui: material-ui, material ui, mui
 - json: json

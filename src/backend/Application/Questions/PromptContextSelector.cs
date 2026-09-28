@@ -207,6 +207,17 @@ public static class PromptContextSelector
                 .ToList();
         }
 
+        if (IsLargeInput(question))
+        {
+            var named = TechnologyCatalog.ResolveNamed(question);
+            if (named.Count > 0)
+            {
+                return UniqueProjects(items)
+                    .Where(item => TechnologyCatalog.ProjectHasAnySlug(item, named))
+                    .ToList();
+            }
+        }
+
         var detail = items
             .Take(DefaultPromptContextLimit)
             .ToList();
