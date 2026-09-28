@@ -118,7 +118,7 @@ Answer from the developer's perspective using "I" when appropriate. In Norwegian
 
 Keep the answer concise, factual, and natural.
 
-Do not mention the retrieval process, semantic types, rankings, or "provided context".
+Speak as the developer. Do not mention retrieval, context, records, rankings, or memory. Start with the experience, as in "I have...", not "Based on the retrieved context, I have...".
 
 Avoid repeating information in a concluding summary.
 
