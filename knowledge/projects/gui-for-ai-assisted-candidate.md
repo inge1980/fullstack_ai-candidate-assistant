@@ -61,7 +61,7 @@ Once the chat existed, the work shifted to the answer prompt and the question ro
 
 # Context
 
-The backend Retrieval-Augmented Generation (RAG) system documented in `ai-candidate-assistant-rag.md` was imported into this repo. In collaboration with Cursor, I added a Vite chat that calls the existing API. The UI, a long series of test questions and prompt fixes, the intent rules, and the way selected chunks are described to the model were what changed when an answer failed in the chat.
+The backend Retrieval-Augmented Generation (RAG) system documented in `ai-candidate-assistant-rag.md` was imported into this repo. In collaboration with Cursor, I added a Vite chat that calls the existing API. After that chat existed, test questions, prompt fixes, intent rules, and the way selected chunks are described to the model, was changed when an answer failed.
 
 ---
 
@@ -109,7 +109,7 @@ A question can be asked, read as a formatted answer, compared with the prompt, a
 
 ### Problem
 
-Retrieval could rank the right chunks and the model could still answer badly. Broad "have you used" questions collapsed to one example. Count questions returned only a number. Professional questions included school or personal projects. A named technology that no project lists was still described as used. Job-ad length input was treated like a short question. Openings used phrases such as "Based on the context" or padded a plain fact with words like "extensive". List answers dropped GitHub or live links, or put every link in the wrong place.
+Retrieval could rank the right chunks and the model could still answer badly. Broad "have you used" questions collapsed to one example. Count questions returned only a number. Professional questions included school or personal projects. A named technology that no project lists was still described as used. A pasted job listing was treated like a short question: technologies named later in the ad fell out of the first chunks, and words such as "and" or "both" were read as if one project had to use every technology in the listing. Openings used phrases such as "Based on the context" or padded a plain fact with words like "extensive". List answers dropped GitHub or live links, or put every link in the wrong place.
 
 The console could show the prompt. It could not show whether the finished paragraph was something I would stand behind.
 
@@ -122,8 +122,8 @@ The answer prompt and the selector that fills it were adjusted from those failur
 - Professional catalog questions drop personal and school projects. When a company's selected periods merge into one span of at least two years, that span is one sentence above the table. Shorter company work stays in the table and out of that sentence.
 - Organization and environment come from frontmatter. Prose that sounds like production does not override those fields.
 - If no selected project lists the named technology, the API does not call the LLM. It returns a short refusal. Related family technologies that were listed may be named as used, without claiming the missing one.
-- "And" on a broad experience question is a union. "Both", "både", and "have you used A and B" are an intersection.
-- A long job-style input is routed as large input so technology matches are not cut down to the first few chunks.
+- "And" on a broad experience question is a union. "Both", "både", and "have you used A and B" are an intersection, except on a pasted job listing, which stays a union.
+- A pasted job listing of at least 1500 characters is routed as large input. Named technologies in that listing are a union, including when the ad says and, both, or både. Every project that used any of those technologies is sent, rather than only the first few chunks. A technology the listing names and no project lists is left as not in the record. When three or more projects match, the answer is a table with one row per project. This tunes the answer to a pasted listing. It is not a candidate-to-job matching product.
 - Project links in an answer come from that project's Links metadata. GitHub and live sit on the title. When enough rows have a portfolio article, that URL goes in an Article column as Read or Les. A rewriter fills those cells from the chunks after generation, so a model that drops a link does not win.
 - The voice is first person, concise, and free of prompt wording. The answer opens from the developer's experience, not from a description of the context.
 
@@ -324,8 +324,8 @@ Testing in this phase is manual, in the GUI, against the configured LLMs. The co
 - Have you used a technology, including C# as an alias for the `csharp` slug.
 - Production versus school or personal, taken from frontmatter.
 - Professional experience across companies, including spans of at least two years.
-- Broad experience with "and" versus "both" / "både".
-- Long job-ad text.
+- Broad experience with "and" versus "both" / "både", and the same words inside a pasted job listing, where they stay a union.
+- Pasted job listings of at least 1500 characters, checked so every project that used any named technology is kept.
 - Norwegian questions and Norwegian chrome.
 - Answers that should refuse, including soft or unsupported claims.
 
@@ -339,7 +339,7 @@ There is no automated UI suite and no retrieval benchmark. Layout was not signed
 
 The local chat is the way this assistant is tried. A question in English or Norwegian returns a formatted answer grounded in the retrieved projects, with GitHub, live, and portfolio links when those URLs exist on the project.
 
-The Module 4 backend remains the knowledge and retrieval system. What this continuation added is a client I can re-ask from, and a prompt that has been corrected against those re-asks: full project lists, professional tenure only where the periods support it, and a short refusal when the named technology is absent.
+The Module 4 backend remains the knowledge and retrieval system. What this continuation added is a client I can re-ask from, and a prompt that has been corrected against those re-asks: full project lists, professional tenure only where the periods support it, a short refusal when the named technology is absent, and job-listing answers that keep every project that used any named technology in the ad.
 
 The work is still active. Prompt wording and question routing are still adjusted when a new question reads wrong. Nothing here is deployed, and there is still no authentication.
 
