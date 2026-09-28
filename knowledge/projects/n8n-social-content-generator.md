@@ -24,6 +24,7 @@ technologies:
   - javaScript
   - http-api
   - structured-json
+  - llm
 
 concepts:
   - llm

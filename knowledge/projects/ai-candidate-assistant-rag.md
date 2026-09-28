@@ -27,6 +27,7 @@ technologies:
   - google-api
   - groq-api
   - openrouter-api
+  - llm
 
 concepts:
   - artificial-intelligence
