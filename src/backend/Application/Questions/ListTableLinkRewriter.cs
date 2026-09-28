@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.RegularExpressions;
 using Application.Knowledge;
 
@@ -13,6 +14,14 @@ public static class ListTableLinkRewriter
         @"^:?-{3,}:?$",
         RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
+    private static readonly Regex SentenceBoundary = new(
+        @"(?<=[.!?])\s+",
+        RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    private static readonly Regex LeadingParenthetical = new(
+        @"^\([^)]*\)\s*",
+        RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
     public static string Apply(
         string? answer,
         IReadOnlyList<KnowledgeRetrievalItem> items,
@@ -24,9 +33,7 @@ public static class ListTableLinkRewriter
         }
 
         locale = QuestionLocale.Normalize(locale);
-        var lines = answer.Replace("\r\n", "\n", StringComparison.Ordinal)
-            .Replace('\r', '\n')
-            .Split('\n');
+        var lines = Lines(answer);
 
         for (var i = 0; i < lines.Length; i++)
         {
@@ -63,6 +70,92 @@ public static class ListTableLinkRewriter
         }
 
         return string.Join("\n", lines);
+    }
+
+    public static bool ContainsProjectTable(string? answer)
+    {
+        if (string.IsNullOrEmpty(answer))
+        {
+            return false;
+        }
+
+        var lines = Lines(answer);
+        for (var i = 0; i < lines.Length; i++)
+        {
+            if (!TryReadProjectTable(lines[i], out _, out _))
+            {
+                continue;
+            }
+
+            if (i + 1 < lines.Length && IsSeparator(lines[i + 1]))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static string BuildCatalogTable(
+        string? answer,
+        IReadOnlyList<KnowledgeRetrievalItem> items,
+        string locale,
+        string? question)
+    {
+        var projects = PromptContextSelector.MatchingProjects(question, items);
+        if (projects.Count == 0)
+        {
+            return answer ?? string.Empty;
+        }
+
+        locale = QuestionLocale.Normalize(locale);
+        var useArticle = projects.Count(item =>
+            AnswerPromptFormatter.PortfolioArticleLink(item, locale).Length > 0) > 2;
+        var articleHeader = locale == QuestionLocale.Nb ? "Artikkel" : "Article";
+        var table = new StringBuilder();
+        table.Append("| Project | Summary |");
+        if (useArticle)
+        {
+            table.Append(' ').Append(articleHeader).Append(" |");
+        }
+
+        table.Append('\n');
+        table.Append("| --- | --- |");
+        if (useArticle)
+        {
+            table.Append(" --- |");
+        }
+
+        table.Append('\n');
+        foreach (var project in projects)
+        {
+            var title = AnswerPromptFormatter.ProjectTitle(project);
+            var summary = SummaryFromAnswer(answer, title);
+            if (summary.Length == 0)
+            {
+                summary = TakeSentences(project.Content, 2);
+            }
+
+            table.Append("| ")
+                .Append(EscapeCell(
+                    AnswerPromptFormatter.FormatLinkHeading(project, useArticle, locale)))
+                .Append(" | ")
+                .Append(EscapeCell(summary))
+                .Append(" |");
+            if (useArticle)
+            {
+                table.Append(' ')
+                    .Append(AnswerPromptFormatter.PortfolioArticleLink(project, locale))
+                    .Append(" |");
+            }
+
+            table.Append('\n');
+        }
+
+        var opening = OpeningSentences(answer);
+        return opening.Length == 0
+            ? table.ToString().TrimEnd()
+            : opening + "\n\n" + table.ToString().TrimEnd();
     }
 
     private static string RewriteRow(
@@ -241,5 +334,145 @@ public static class ListTableLinkRewriter
         return string.Join(
             ' ',
             text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+    }
+
+    private static string[] Lines(string answer)
+    {
+        return answer.Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n')
+            .Split('\n');
+    }
+
+    private static string OpeningSentences(string? answer)
+    {
+        if (string.IsNullOrWhiteSpace(answer))
+        {
+            return string.Empty;
+        }
+
+        var prose = new StringBuilder();
+        foreach (var line in Lines(answer))
+        {
+            var trimmed = line.Trim();
+            if (trimmed.Length == 0)
+            {
+                if (prose.Length > 0)
+                {
+                    break;
+                }
+
+                continue;
+            }
+
+            if (IsStructuralLine(trimmed))
+            {
+                break;
+            }
+
+            if (prose.Length > 0)
+            {
+                prose.Append(' ');
+            }
+
+            prose.Append(trimmed);
+        }
+
+        return TakeSentences(prose.ToString(), 2);
+    }
+
+    private static string SummaryFromAnswer(string? answer, string title)
+    {
+        if (string.IsNullOrWhiteSpace(answer) || title.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        var collapsedTitle = Collapse(title);
+        string? fallback = null;
+        foreach (var line in Lines(answer))
+        {
+            var visible = VisibleText(line);
+            var rest = DescriptionAfterTitle(visible, collapsedTitle);
+            if (rest.Length < 12)
+            {
+                continue;
+            }
+
+            var summary = TakeSentences(rest, 2);
+            if (IsStructuralLine(line.Trim()))
+            {
+                return summary;
+            }
+
+            fallback ??= summary;
+        }
+
+        return fallback ?? string.Empty;
+    }
+
+    private static string DescriptionAfterTitle(string visible, string title)
+    {
+        var index = visible.IndexOf(title, StringComparison.OrdinalIgnoreCase);
+        if (index < 0)
+        {
+            return string.Empty;
+        }
+
+        var rest = visible[(index + title.Length)..].Trim();
+        rest = LeadingParenthetical.Replace(rest, string.Empty);
+        return rest.TrimStart(':', '-', '.', ' ').Trim();
+    }
+
+    private static string VisibleText(string line)
+    {
+        var text = MarkdownLink.Replace(line, "$1");
+        return Collapse(text
+            .Replace("*", string.Empty, StringComparison.Ordinal)
+            .Replace("_", string.Empty, StringComparison.Ordinal)
+            .Replace("`", string.Empty, StringComparison.Ordinal));
+    }
+
+    private static bool IsStructuralLine(string trimmed)
+    {
+        return trimmed.StartsWith('|')
+            || trimmed.StartsWith("- ", StringComparison.Ordinal)
+            || trimmed.StartsWith("* ", StringComparison.Ordinal)
+            || trimmed.StartsWith('#')
+            || (trimmed.Length > 2
+                && char.IsDigit(trimmed[0])
+                && trimmed.Contains(". ", StringComparison.Ordinal));
+    }
+
+    private static string TakeSentences(string? text, int count)
+    {
+        var collapsed = Collapse(text ?? string.Empty);
+        if (collapsed.Length == 0 || count <= 0)
+        {
+            return string.Empty;
+        }
+
+        var parts = SentenceBoundary.Split(collapsed);
+        if (parts.Length == 1)
+        {
+            return TrimWords(parts[0], 420);
+        }
+
+        return string.Join(' ', parts.Take(count));
+    }
+
+    private static string TrimWords(string text, int max)
+    {
+        if (text.Length <= max)
+        {
+            return text;
+        }
+
+        var cut = text.LastIndexOf(' ', Math.Min(max, text.Length - 1));
+        if (cut < 80)
+        {
+            cut = max;
+        }
+
+        return text[..cut].TrimEnd() + ".";
     }
 }

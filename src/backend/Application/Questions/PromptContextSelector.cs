@@ -9,6 +9,7 @@ public static class PromptContextSelector
     public const int DefaultPromptContextLimit = 10;
     public const int ReservedMissingTechnologyCap = 15;
     public const int LargeInputLength = 1500;
+    public const int ProjectTableRowMinimum = 3;
     public const int FilterListRetrievalCap = 100;
     public const int FilterListChunksPerProject = 8;
 
@@ -283,11 +284,64 @@ public static class PromptContextSelector
             && !IsTechIntersectionQuestion(question);
     }
 
-    public static string TechListInstruction(string? question)
+    public static bool IsLargeInputIntent(QuestionIntent intent)
+    {
+        return string.Equals(
+            intent.Category,
+            QuestionIntentDetector.LargeInput,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static List<KnowledgeRetrievalItem> MatchingProjects(
+        string? question,
+        IReadOnlyList<KnowledgeRetrievalItem>? items)
+    {
+        if (items is null || items.Count == 0)
+        {
+            return [];
+        }
+
+        IEnumerable<KnowledgeRetrievalItem> selected = items;
+        var named = TechnologyCatalog.ResolveNamed(question);
+        if (named.Count > 0)
+        {
+            selected = IsTechIntersectionQuestion(question)
+                ? items.Where(item => TechnologyCatalog.ProjectHasEverySlug(item, named))
+                : items.Where(item => TechnologyCatalog.ProjectHasAnySlug(item, named));
+        }
+
+        return selected
+            .GroupBy(item => item.Source, StringComparer.OrdinalIgnoreCase)
+            .Select(static group => group.First())
+            .ToList();
+    }
+
+    public static bool ShouldBuildSmallCatalogTable(
+        QuestionIntent intent,
+        string? question,
+        IReadOnlyList<KnowledgeRetrievalItem> items)
+    {
+        if (IsCount(intent)
+            || (!IsList(intent)
+                && !IsFilterList(intent)
+                && !IsLargeInputIntent(intent)))
+        {
+            return false;
+        }
+
+        var count = MatchingProjects(question, items).Count;
+        return count is > 0 and < ProjectTableRowMinimum;
+    }
+
+    public static string TechListInstruction(
+        string? question,
+        IReadOnlyList<KnowledgeRetrievalItem>? items = null,
+        string? locale = null)
     {
         if (IsLargeInput(question))
         {
-            return "This question is long, such as a pasted job ad. Named technologies are a union, even if the text contains both, både, and, or og. Include a project when it used any named technology, and say which of those technologies it used. A named technology with no matching project is not in the record. Do not require one project to have used every named technology.";
+            return "This question is long, such as a pasted job ad. Named technologies are a union, even if the text contains both, både, and, or og. Include a project when it used any named technology, and say which of those technologies it used. A named technology with no matching project is not in the record. Do not require one project to have used every named technology."
+                + ProjectTableInstruction(question, items, locale);
         }
 
         if (IsTechIntersectionQuestion(question))
@@ -301,6 +355,38 @@ public static class PromptContextSelector
         }
 
         return string.Empty;
+    }
+
+    private static string ProjectTableInstruction(
+        string? question,
+        IReadOnlyList<KnowledgeRetrievalItem>? items,
+        string? locale)
+    {
+        if (!IsLargeInputIntent(QuestionIntentDetector.Detect(question)))
+        {
+            return string.Empty;
+        }
+
+        var projects = MatchingProjects(question, items);
+        if (projects.Count < ProjectTableRowMinimum)
+        {
+            return string.Empty;
+        }
+
+        locale = QuestionLocale.Normalize(locale);
+        var useArticle = projects.Count(item =>
+            AnswerPromptFormatter.PortfolioArticleLink(item, locale).Length > 0) > 2;
+        var columns = useArticle
+            ? locale == QuestionLocale.Nb
+                ? "Project | Summary | Artikkel"
+                : "Project | Summary | Article"
+            : "Project | Summary";
+
+        return " There are "
+            + projects.Count
+            + " matching projects. Put every one of them in a Markdown table with columns "
+            + columns
+            + ", one data row per numbered project. Do not use a bullet list. Do not stop at 3-5 projects.";
     }
 
     private static List<KnowledgeRetrievalItem> ReserveMissingNamedTechnologyOverviews(

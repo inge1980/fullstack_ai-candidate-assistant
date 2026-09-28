@@ -198,6 +198,18 @@ public sealed class QuestionService(
                 cancellationToken);
 
         answer = ListTableLinkRewriter.Apply(answer, promptResults, locale);
+        if (PromptContextSelector.ShouldBuildSmallCatalogTable(
+                intent,
+                question,
+                promptResults)
+            && !ListTableLinkRewriter.ContainsProjectTable(answer))
+        {
+            answer = ListTableLinkRewriter.BuildCatalogTable(
+                answer,
+                promptResults,
+                locale,
+                question);
+        }
 
         llmStopwatch.Stop();
         Console.WriteLine($"[Timing] LLM: {llmStopwatch.ElapsedMilliseconds} ms");

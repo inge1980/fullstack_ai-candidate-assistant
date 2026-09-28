@@ -79,7 +79,10 @@ public static class AnswerPromptFormatter
                 QuestionLocale.AnswerLanguageInstruction(locale))
             .Replace(
                 "{{tech_list_instruction}}",
-                PromptContextSelector.TechListInstruction(question))
+                PromptContextSelector.TechListInstruction(
+                    question,
+                    promptItems,
+                    locale))
             .Replace(
                 "{{tech_match_instruction}}",
                 TechnologyCatalog.MatchInstruction(question, promptItems));
